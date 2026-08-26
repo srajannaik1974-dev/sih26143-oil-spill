@@ -37,6 +37,7 @@ import random
 import sys
 import time
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -116,7 +117,7 @@ class CombinedLoss(nn.Module):
         self,
         logits:  torch.Tensor,
         targets: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Returns (total_loss, bce_loss, dice_loss_value) for logging.
         """
@@ -135,7 +136,7 @@ def compute_dice_iou(
     logits:    torch.Tensor,
     targets:   torch.Tensor,
     threshold: float = 0.5,
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
     """
     Compute Dice score and IoU from raw logits and binary targets.
 
@@ -352,8 +353,10 @@ def train(args: argparse.Namespace) -> None:
     # ── Optimiser + Scheduler ────────────────────────────────────────────────
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
     # ReduceLROnPlateau: halve LR if val Dice doesn't improve for 5 epochs.
+    # NOTE: verbose=True was removed in PyTorch >= 2.2 — LR change is logged
+    # manually below by comparing LR before and after scheduler.step().
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="max", factor=0.5, patience=5, verbose=True
+        optimizer, mode="max", factor=0.5, patience=5
     )
 
     # ── Loss ─────────────────────────────────────────────────────────────────
@@ -391,8 +394,17 @@ def train(args: argparse.Namespace) -> None:
               f"lr={current_lr:.2e}  "
               f"time={elapsed:.1f}s")
 
-        # Step the LR scheduler based on validation Dice
+        # Step the LR scheduler based on validation Dice.
+        # Capture LR before and after so we can log any reduction manually
+        # (verbose=True was removed from ReduceLROnPlateau in PyTorch >= 2.2).
+        lr_before = optimizer.param_groups[0]["lr"]
         scheduler.step(val_metrics["dice"])
+        lr_after = optimizer.param_groups[0]["lr"]
+        if lr_after < lr_before:
+            print(
+                f"  *** LR reduced: {lr_before:.2e} → {lr_after:.2e} "
+                f"(val_dice has not improved for 5 epochs) ***"
+            )
 
         # Record history
         history.append({

@@ -27,6 +27,8 @@ Segmentation", MICCAI 2015. https://arxiv.org/abs/1505.04597
 
 from __future__ import annotations
 
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -74,7 +76,7 @@ class _EncoderBlock(nn.Module):
         self.conv = _DoubleConv(in_ch, out_ch)
         self.pool = nn.MaxPool2d(2)
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         skip = self.conv(x)   # full-resolution feature map for skip connection
         down = self.pool(skip) # half-resolution for next encoder block
         return skip, down

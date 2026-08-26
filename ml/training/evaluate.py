@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -45,7 +46,7 @@ warnings.filterwarnings("ignore", category=NotGeoreferencedWarning)
 # Load checkpoint
 # ---------------------------------------------------------------------------
 
-def load_model(ckpt_path: Path, device: torch.device) -> tuple[UNet, dict]:
+def load_model(ckpt_path: Path, device: torch.device) -> Tuple[UNet, dict]:
     """
     Load a saved UNet checkpoint.
     Returns (model, checkpoint_dict).
@@ -56,7 +57,9 @@ def load_model(ckpt_path: Path, device: torch.device) -> tuple[UNet, dict]:
             "Run train.py first to generate the checkpoint."
         )
 
-    ckpt = torch.load(str(ckpt_path), map_location=device)
+    # weights_only=False required: checkpoint dict contains non-tensor args.
+    # PyTorch >= 2.4 warns if this is not set explicitly.
+    ckpt = torch.load(str(ckpt_path), map_location=device, weights_only=False)
 
     # Recreate the model with the same arguments used during training
     saved_args   = ckpt.get("args", {})

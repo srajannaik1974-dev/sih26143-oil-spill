@@ -39,7 +39,7 @@ from __future__ import annotations
 import sys
 import warnings
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -83,10 +83,10 @@ class OilSpillPredictor:
 
     def __init__(
         self,
-        ckpt_path:  str | Path,
+        ckpt_path:  Union[str, Path],
         image_size: int   = 512,
         threshold:  float = 0.5,
-        device:     str | torch.device | None = None,
+        device:     Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.image_size = image_size
         self.threshold  = threshold
@@ -109,7 +109,10 @@ class OilSpillPredictor:
                 f"Checkpoint not found: {ckpt_path}\n"
                 "Train the model first with ml/training/train.py"
             )
-        ckpt = torch.load(str(ckpt_path), map_location=self.device)
+        # weights_only=False is required because the checkpoint dict contains
+        # non-tensor Python objects (the args namespace). PyTorch >= 2.4 will
+        # raise a FutureWarning if this is not set explicitly.
+        ckpt = torch.load(str(ckpt_path), map_location=self.device, weights_only=False)
         saved_args    = ckpt.get("args", {})
         base_features = saved_args.get("base_features", 64)
 
