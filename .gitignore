@@ -216,3 +216,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ── SIH 2026 PS-26143 ─────────────────────────────────────────────────────────
+# Raw dataset files — never commit large binary raster data
+ml/dataset/**
+!ml/dataset/README.md
+!ml/dataset/prepare_prototype_dataset.py
+
+# Generated inspection output
+ml/dataset_summary.json
+
+# Model checkpoints and weights (future)
+ml/training/checkpoints/
+ml/inference/weights/
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.onnx
+
+# Rasterio / GDAL auxiliary
+*.aux.xml
+*.tfw
+*.ovr
