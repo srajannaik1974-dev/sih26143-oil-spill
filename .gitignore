@@ -239,3 +239,11 @@ ml/inference/weights/
 *.aux.xml
 *.tfw
 *.ovr
+
+# API — temporary uploads and generated prediction outputs
+uploads/
+predictions/
+*.npy
+
+# API — never commit secrets
+.env
