@@ -376,7 +376,7 @@ st.markdown(
 
 st.markdown('<p class="section-header">📁 Upload SAR Image</p>', unsafe_allow_html=True)
 
-uploaded_file = st.sidebar.file_uploader(
+uploaded_file = st.file_uploader(
     "Upload a Sentinel-1 SAR TIFF file (.tif / .tiff) — 1 band required (VV)",
     type=["tif", "tiff"],
     help=(
