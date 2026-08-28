@@ -37,38 +37,11 @@ THRESHOLD       = 0.7
 
 # ── Model settings ─────────────────────────────────────────────────────────────
 IMAGE_SIZE     = 256
-HF_REPO_ID     = "Sachin-007/unet-oil-spill-segmentation"
-HF_FILENAME    = "unet_oil_spill_finetuned.keras"
 LOCAL_CKPT_DIR = Path(__file__).resolve().parent / "ml" / "training" / "checkpoints"
-LOCAL_CKPT_PATH = LOCAL_CKPT_DIR / HF_FILENAME
+LOCAL_CKPT_PATH = LOCAL_CKPT_DIR / "best_unet.pth"
 
-# Required number of input channels for VV+VH Sentinel-1 data.
-# The model MUST have input shape (None, 256, 256, REQUIRED_CHANNELS).
-REQUIRED_CHANNELS = 2
-
-
-# ==============================================================================
-# Custom exception — raised when the loaded model's channel count != REQUIRED_CHANNELS
-# ==============================================================================
-
-class IncompatibleModelError(Exception):
-    """
-    Raised when the downloaded .keras model expects a different number of input
-    channels than the REQUIRED_CHANNELS (2 for VV+VH Sentinel-1 data).
-
-    Attributes
-    ----------
-    model_channels : int   channel count the loaded model actually expects
-    required       : int   channel count needed for VV+VH input (always 2)
-    """
-    def __init__(self, model_channels: int, required: int = REQUIRED_CHANNELS):
-        self.model_channels = model_channels
-        self.required       = required
-        super().__init__(
-            f"Model incompatible: expects {model_channels}-channel input, "
-            f"but Sentinel-1 VV+VH data requires {required}-channel input "
-            f"(None, 256, 256, {required})."
-        )
+# Required number of input channels for VV Sentinel-1 data.
+REQUIRED_CHANNELS = 1
 
 # ==============================================================================
 # Page configuration
@@ -217,85 +190,42 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ==============================================================================
-# Helper: load Keras model (cached) — download from Hugging Face if not on disk
-# ==============================================================================
-
 @st.cache_resource(show_spinner=False)
 def _load_model():
     """
-    Download unet_oil_spill_finetuned.keras from Hugging Face (once) and load
-    it with keras.saving.load_model().
-
-    Raises
-    ------
-    IncompatibleModelError
-        If the model's input channel count != REQUIRED_CHANNELS (2).
-        The app will surface this with a clear, actionable error banner.
-    RuntimeError
-        If the download from Hugging Face Hub fails.
+    Load the PyTorch U-Net using OilSpillPredictor.
     """
-    import keras
+    import sys
+    _ROOT = Path(__file__).resolve().parent
+    if str(_ROOT) not in sys.path:
+        sys.path.insert(0, str(_ROOT))
 
-    # 1) Use locally cached file if it already exists
-    if LOCAL_CKPT_PATH.exists():
-        model_path = LOCAL_CKPT_PATH
-    else:
-        # 2) Download from Hugging Face Hub
-        try:
-            from huggingface_hub import hf_hub_download
-            LOCAL_CKPT_DIR.mkdir(parents=True, exist_ok=True)
-            model_path = Path(
-                hf_hub_download(
-                    repo_id   = HF_REPO_ID,
-                    filename  = HF_FILENAME,
-                    local_dir = str(LOCAL_CKPT_DIR),
-                )
-            )
-        except Exception as hf_err:
-            raise RuntimeError(
-                f"Could not download '{HF_FILENAME}' from '{HF_REPO_ID}'.\n\n"
-                f"Error: {hf_err}\n\n"
-                "Check your internet connection and that the repository is public."
-            ) from hf_err
-
-    # 3) Load with Keras (compile=False — inference only)
-    model = keras.saving.load_model(str(model_path), compile=False)
-
-    # 4) Channel-count compatibility guard — MUST run before any prediction
-    model_channels = model.inputs[0].shape[-1]   # e.g. 1 or 2
-    if model_channels != REQUIRED_CHANNELS:
-        raise IncompatibleModelError(
-            model_channels = int(model_channels),
-            required       = REQUIRED_CHANNELS,
-        )
-
-    return model
+    from ml.training.inference import OilSpillPredictor
+    
+    if not LOCAL_CKPT_PATH.exists():
+        raise FileNotFoundError(f"PyTorch checkpoint not found: {LOCAL_CKPT_PATH}")
+    
+    predictor = OilSpillPredictor(
+        ckpt_path=LOCAL_CKPT_PATH,
+        image_size=IMAGE_SIZE,
+        threshold=THRESHOLD,
+        device="cpu"  # Force CPU for Streamlit inference
+    )
+    return predictor
 
 
-# ==============================================================================
-# Helper: preprocess a SAR TIFF for the Keras model
-# ==============================================================================
-
-def _preprocess_tiff(file_bytes: bytes, filename: str):
+def _run_inference(file_bytes: bytes, filename: str):
     """
-    Read a 2-band Sentinel-1 SAR TIFF from bytes, normalise it, and return:
-      input_tensor : np.ndarray  shape (1, 256, 256, 2)  float32  [0, 1]
-      sar_disp     : np.ndarray  shape (H_orig, W_orig)  float32  [0, 1]
-                     VV channel normalised for display only
-      orig_shape   : (H_orig, W_orig)
+    Run the PyTorch OilSpillPredictor, and
+    return (binary_mask, prob_map, sar_disp).
 
-    Normalisation (applied per-band):
-        image_norm = np.clip((image + 40.0) / 60.0, 0.0, 1.0)
-
-    Raises
-    ------
-    ValueError
-        If the uploaded TIFF does not have exactly 2 bands (VV + VH).
-        The app will prompt the user to upload a valid 2-band file.
+    binary_mask : np.ndarray (H, W) uint8   {0, 1}    at original resolution
+    prob_map    : np.ndarray (H, W) float32 [0, 1]    at original resolution
+    sar_disp    : np.ndarray (H, W) float32 [0, 1]    VV, normalised
     """
+    import tempfile
     import rasterio
-    import cv2
+    from ml.training.dataset import normalise_sar_channel
 
     suffix = Path(filename).suffix.lower() or ".tif"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
@@ -303,80 +233,24 @@ def _preprocess_tiff(file_bytes: bytes, filename: str):
         tmp_path = Path(tmp.name)
 
     try:
+        # 1. Load model predictor
+        predictor = _load_model()
+        
+        # 2. Run inference directly from file
+        binary_mask, prob_map = predictor.predict(tmp_path)
+        
+        # 3. Read the SAR image for display (just 1 band)
         with rasterio.open(str(tmp_path)) as src:
-            arr = src.read().astype(np.float32)  # (C, H, W)
+            arr = src.read().astype(np.float32)
+        
+        sar_disp = normalise_sar_channel(arr[0])
+
+        return binary_mask, prob_map, sar_disp
     finally:
         try:
             tmp_path.unlink()
         except OSError:
             pass
-
-    n_bands, H, W = arr.shape
-
-    # Strict 2-band check — do NOT silently coerce 1-band data
-    if n_bands != REQUIRED_CHANNELS:
-        raise ValueError(
-            f"Expected a {REQUIRED_CHANNELS}-band Sentinel-1 TIFF (VV + VH), "
-            f"but the uploaded file has {n_bands} band(s).\n"
-            "Please upload a 2-band GeoTIFF where band 1 = VV and band 2 = VH."
-        )
-
-    # Normalise each band:  image_norm = np.clip((image + 40.0) / 60.0, 0.0, 1.0)
-    norm = np.clip((arr + 40.0) / 60.0, 0.0, 1.0)   # (2, H, W)
-
-    # SAR display: VV channel (band 0), normalised
-    sar_disp = norm[0]   # (H, W) float32 [0, 1]
-
-    # Transpose to (H, W, 2) for cv2/Keras convention
-    norm_hwc = np.transpose(norm, (1, 2, 0))   # (H, W, 2)
-
-    # Resize to 256×256
-    resized = cv2.resize(
-        norm_hwc,
-        (IMAGE_SIZE, IMAGE_SIZE),
-        interpolation=cv2.INTER_LINEAR,
-    )   # (256, 256, 2)
-
-    # Add batch dimension → (1, 256, 256, 2)
-    input_tensor = resized[np.newaxis, ...].astype(np.float32)
-
-    return input_tensor, sar_disp, (H, W)
-
-
-# ==============================================================================
-# Helper: run full inference pipeline
-# ==============================================================================
-
-def _run_inference(file_bytes: bytes, filename: str):
-    """
-    Preprocess the uploaded TIFF, run the Keras model, apply threshold, and
-    return (binary_mask, prob_map, sar_disp).
-
-    binary_mask : np.ndarray (H, W) uint8   {0, 1}    at original resolution
-    prob_map    : np.ndarray (H, W) float32 [0, 1]    at original resolution
-    sar_disp    : np.ndarray (H, W) float32 [0, 1]    VV, normalised
-    """
-    import cv2
-
-    # 1. Preprocess
-    input_tensor, sar_disp, (H, W) = _preprocess_tiff(file_bytes, filename)
-
-    # 2. Load model and run inference
-    model = _load_model()
-    prediction = model.predict(input_tensor, verbose=0)  # (1, 256, 256, 1)
-
-    # 3. Extract probability map at model output resolution
-    prob_256 = prediction[0, :, :, 0].astype(np.float32)   # (256, 256) ∈ [0, 1]
-
-    # 4. Upsample probability map back to original resolution
-    prob_map = cv2.resize(
-        prob_256, (W, H), interpolation=cv2.INTER_LINEAR
-    ).astype(np.float32)   # (H, W)
-
-    # 5. Apply threshold → binary mask
-    binary_mask = (prob_map >= THRESHOLD).astype(np.uint8)  # (H, W) {0, 1}
-
-    return binary_mask, prob_map, sar_disp
 
 
 # ==============================================================================
@@ -502,12 +376,12 @@ st.markdown(
 
 st.markdown('<p class="section-header">📁 Upload SAR Image</p>', unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(
-    "Upload a Sentinel-1 SAR TIFF file (.tif / .tiff) — 2 bands required (VV + VH)",
+uploaded_file = st.sidebar.file_uploader(
+    "Upload a Sentinel-1 SAR TIFF file (.tif / .tiff) — 1 band required (VV)",
     type=["tif", "tiff"],
     help=(
-        "The file must be a 2-channel Sentinel-1 SAR TIFF "
-        "(band 1 = VV polarisation, band 2 = VH polarisation). "
+        "The file must be a 1-channel Sentinel-1 SAR TIFF "
+        "(band 1 = VV polarisation). "
         "Typical file size: 5–200 MB."
     ),
     key="sar_upload",
@@ -526,67 +400,13 @@ if uploaded_file is not None:
         try:
             binary_mask, prob_map, sar_disp = _run_inference(file_bytes, uploaded_file.name)
             inference_ok = True
-        except IncompatibleModelError as e:
-            # ── Prominent incompatibility banner ────────────────────────────────
-            st.markdown(
-                f"""
-                <div style="
-                    background: rgba(248,81,73,0.08);
-                    border: 1.5px solid rgba(248,81,73,0.5);
-                    border-radius: 12px;
-                    padding: 1.2rem 1.4rem;
-                    margin-top: 0.5rem;
-                ">
-                    <p style="color:#f85149;font-size:1rem;font-weight:700;margin:0 0 0.6rem 0;">
-                        ❌ Model–Data Incompatibility Detected
-                    </p>
-                    <p style="color:#e6edf3;font-size:0.88rem;margin:0 0 0.5rem 0;">
-                        The downloaded model <code>{HF_FILENAME}</code> from
-                        <code>{HF_REPO_ID}</code> is <strong>not compatible</strong>
-                        with 2-band Sentinel-1 VV+VH input.
-                    </p>
-                    <table style="width:100%;font-size:0.85rem;color:#c9d1d9;border-collapse:collapse;">
-                        <tr>
-                            <td style="padding:3px 10px 3px 0;color:#8b949e;">Model input shape</td>
-                            <td><code style="color:#f85149;">(None, 256, 256, {e.model_channels})</code>
-                                — {e.model_channels}-channel (grayscale only)</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:3px 10px 3px 0;color:#8b949e;">Required input shape</td>
-                            <td><code style="color:#3fb950;">(None, 256, 256, {e.required})</code>
-                                — {e.required}-channel (VV + VH)</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:3px 10px 3px 0;color:#8b949e;">Your TIFF</td>
-                            <td><code style="color:#3fb950;">2 bands</code> — correct ✅</td>
-                        </tr>
-                    </table>
-                    <hr style="border-color:rgba(248,81,73,0.2);margin:0.8rem 0;">
-                    <p style="color:#e3b341;font-size:0.85rem;font-weight:600;margin:0 0 0.4rem 0;">
-                        🔧 How to fix:
-                    </p>
-                    <p style="color:#c9d1d9;font-size:0.84rem;margin:0;">
-                        Replace <code>{HF_FILENAME}</code> with a U-Net model trained on
-                        <strong>2-channel (VV+VH)</strong> Sentinel-1 input, or train your own
-                        using <code>ml/training/train.py</code> (produces a PyTorch checkpoint —
-                        use that backend) and upload a compatible <code>.keras</code> model to
-                        <code>{HF_REPO_ID}</code>.<br><br>
-                        Do <strong>not</strong> use the existing
-                        <code>unet_oil_spill_finetuned.keras</code> file for VV+VH inference
-                        — it was trained on single-channel grayscale SAR data only.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            inference_ok = False
         except FileNotFoundError as e:
             st.error(f"**Model not found:**\n\n{e}")
             inference_ok = False
         except ValueError as e:
             st.error(
                 f"**Invalid TIFF file:**\n\n{e}\n\n"
-                "Please upload a Sentinel-1 SAR TIFF with exactly 2 bands (VV + VH)."
+                "Please upload a Sentinel-1 SAR TIFF with exactly 1 band (VV)."
             )
             inference_ok = False
         except Exception as e:
@@ -680,7 +500,7 @@ if uploaded_file is not None:
                 st.markdown(f"- Total pixels: `{total_pixels:,}`")
             with detail_cols[1]:
                 st.markdown("**Model Configuration**")
-                st.markdown(f"- Architecture: `U-Net (2-channel input)`")
+                st.markdown(f"- Architecture: `U-Net (1-channel input)`")
                 st.markdown(f"- Input resize: `{IMAGE_SIZE} × {IMAGE_SIZE} px`")
                 st.markdown(f"- Detection threshold: `{THRESHOLD}`")
                 st.markdown(f"- Inference device: `CPU`")
@@ -703,7 +523,7 @@ else:
                 Upload a Sentinel-1 SAR TIFF to begin analysis
             </p>
             <p style="font-size: 0.85rem; margin: 0;">
-                The model accepts 2-channel (VV + VH) GeoTIFF files from the Sentinel-1 SAR sensor.
+                The model accepts 1-channel (VV) GeoTIFF files from the Sentinel-1 SAR sensor.
             </p>
         </div>
         """,

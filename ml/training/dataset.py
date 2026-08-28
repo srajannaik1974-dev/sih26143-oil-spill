@@ -2,12 +2,12 @@
 ml/training/dataset.py
 ======================
 SIH 2026 — PS 26143: Sentinel-1 SAR Oil-Spill Detection
-PyTorch Dataset for 2-channel SAR images + binary segmentation masks.
+PyTorch Dataset for 1-channel SAR images + binary segmentation masks.
 
 Key design decisions
 --------------------
 - Reads TIFF files via rasterio (suppresses NotGeoreferencedWarning).
-- Expects images of shape (2, H, W) — two SAR polarisation channels.
+- Expects images of shape (1, H, W) — single SAR polarisation channel.
 - Normalises each channel independently with percentile clipping so that
   the highly variable SAR dB range is mapped to [0, 1] reliably.
 - Resizes both image and mask to a configurable target size (default 512x512).
@@ -154,12 +154,12 @@ def _resize_mask(tensor: torch.Tensor, size: int) -> torch.Tensor:
 
 class SAROilSpillDataset(Dataset):
     """
-    PyTorch Dataset for 2-channel Sentinel-1 SAR oil-spill segmentation.
+    PyTorch Dataset for 1-channel Sentinel-1 SAR oil-spill segmentation.
 
     Parameters
     ----------
     image_dir : str or Path
-        Directory containing TIFF images with shape (2, H, W).
+        Directory containing TIFF images with shape (1, H, W).
     mask_dir : str or Path
         Directory containing TIFF masks with shape (1, H, W), values 0 or 1.
     image_size : int
@@ -201,19 +201,17 @@ class SAROilSpillDataset(Dataset):
         # ── Load image ──────────────────────────────────────────────────────
         # rasterio.read() returns (C, H, W) — exactly what we need.
         with rasterio.open(str(img_path)) as src:
-            image = src.read().astype(np.float32)  # (2, H, W) float32
+            image = src.read().astype(np.float32)  # (1, H, W) float32
 
-        if image.shape[0] != 2:
+        if image.shape[0] != 1:
             raise ValueError(
-                f"Expected 2-channel SAR image, got {image.shape[0]} channels: "
+                f"Expected 1-channel SAR image, got {image.shape[0]} channels: "
                 f"{img_path}"
             )
 
         # ── Normalise each SAR channel independently ─────────────────────
-        # Channel 0: typically VV polarisation
-        # Channel 1: typically VH polarisation
+        # Channel 0: VV polarisation
         image[0] = normalise_sar_channel(image[0])
-        image[1] = normalise_sar_channel(image[1])
 
         # ── Load mask ───────────────────────────────────────────────────────
         with rasterio.open(str(msk_path)) as src:
@@ -223,11 +221,11 @@ class SAROilSpillDataset(Dataset):
         mask = np.clip(mask, 0.0, 1.0)
 
         # ── Convert to tensors ──────────────────────────────────────────────
-        image_t = torch.from_numpy(image)  # (2, H, W)
+        image_t = torch.from_numpy(image)  # (1, H, W)
         mask_t  = torch.from_numpy(mask)   # (1, H, W)
 
         # ── Resize to target size ───────────────────────────────────────────
-        image_t = _resize_image(image_t, self.image_size)  # (2, 512, 512)
+        image_t = _resize_image(image_t, self.image_size)  # (1, 512, 512)
         mask_t  = _resize_mask(mask_t,  self.image_size)   # (1, 512, 512)
 
         # ── Augmentation (training only) ────────────────────────────────────

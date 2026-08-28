@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 
 def _make_minimal_tiff() -> bytes:
     """
-    Build the smallest valid 2-band float32 GeoTIFF in memory.
+    Build the smallest valid 1-band float32 GeoTIFF in memory.
     Returns raw bytes suitable for uploading in tests.
     """
     try:
@@ -30,9 +30,8 @@ def _make_minimal_tiff() -> bytes:
         from rasterio.io import MemoryFile
         from rasterio.transform import from_bounds
 
-        data = np.zeros((2, 4, 4), dtype=np.float32)  # 2-channel, 4×4
+        data = np.zeros((1, 4, 4), dtype=np.float32)  # 1-channel, 4×4
         data[0] = -10.0  # VV channel — typical SAR dB value
-        data[1] = -15.0  # VH channel
 
         transform = from_bounds(0, 0, 1, 1, 4, 4)
 

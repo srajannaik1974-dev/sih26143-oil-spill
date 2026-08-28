@@ -126,8 +126,8 @@ class TestPredictInferenceErrors:
         We patch run_prediction directly to raise ValueError without needing
         a real multi-band TIFF.
         """
-        with patch("api.routers.ml.run_prediction",
-                   side_effect=ValueError("Expected a 2-channel TIFF, got shape (1, 4, 4)")):
+        with patch("ml.training.inference.OilSpillPredictor._load_tiff",
+                   side_effect=ValueError("Expected a 1-channel TIFF, got shape (1, 4, 4)")):
             resp = client_with_mock_predictor.post(
                 "/api/ml/predict",
                 files={"file": ("scene.tif", VALID_TIFF_BYTES, "image/tiff")},
@@ -135,7 +135,7 @@ class TestPredictInferenceErrors:
         assert resp.status_code == 400
         data = resp.json()
         assert data["detail"]["error"]["code"] == "INVALID_TIFF"
-        assert "2-channel" in data["detail"]["error"]["message"]
+        assert "1-channel" in data["detail"]["error"]["message"]
 
     def test_inference_runtime_error_returns_500(self, client_with_mock_predictor):
         """If inference raises an unexpected RuntimeError → 500 Internal Server Error."""

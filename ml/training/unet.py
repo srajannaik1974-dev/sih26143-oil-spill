@@ -11,7 +11,7 @@ Architecture overview
 - Decoder: 4 upsampling blocks, each with Upsample→concat skip→2x Conv→BN→ReLU.
 - Output: 1x1 Conv → raw logit (no sigmoid).
 
-Input  : (B, 2, H, W) — 2-channel SAR float32, normalised to [0, 1]
+Input  : (B, 1, H, W) — 1-channel SAR float32, normalised to [0, 1]
 Output : (B, 1, H, W) — raw logits (apply sigmoid externally for probabilities)
 
 IMPORTANT: The model outputs RAW LOGITS.
@@ -126,12 +126,12 @@ class _DecoderBlock(nn.Module):
 
 class UNet(nn.Module):
     """
-    U-Net for binary segmentation of 2-channel Sentinel-1 SAR imagery.
+    U-Net for binary segmentation of 1-channel Sentinel-1 SAR imagery.
 
     Parameters
     ----------
     in_channels : int
-        Number of input channels. Must be 2 for SAR (VV + VH).
+        Number of input channels. Must be 1 for SAR (VV).
     out_channels : int
         Number of output channels. 1 for binary segmentation.
     base_features : int
@@ -147,7 +147,7 @@ class UNet(nn.Module):
 
     def __init__(
         self,
-        in_channels:   int = 2,
+        in_channels:   int = 1,
         out_channels:  int = 1,
         base_features: int = 64,
     ) -> None:
@@ -177,7 +177,7 @@ class UNet(nn.Module):
         """
         Parameters
         ----------
-        x : (B, 2, H, W) float32 tensor, channels normalised to [0, 1]
+        x : (B, 1, H, W) float32 tensor, channels normalised to [0, 1]
 
         Returns
         -------
@@ -211,11 +211,11 @@ class UNet(nn.Module):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    model = UNet(in_channels=2, out_channels=1, base_features=64)
+    model = UNet(in_channels=1, out_channels=1, base_features=64)
     print(f"U-Net parameters: {model.count_parameters():,}")
 
-    # Simulate a batch of 2 images at 512x512 with 2 SAR channels
-    dummy = torch.randn(2, 2, 512, 512)
+    # Simulate a batch of 2 images at 512x512 with 1 SAR channel
+    dummy = torch.randn(2, 1, 512, 512)
     logits = model(dummy)
     print(f"Input  : {dummy.shape}")
     print(f"Output : {logits.shape}")   # should be (2, 1, 512, 512)

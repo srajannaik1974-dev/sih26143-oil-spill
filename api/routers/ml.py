@@ -130,7 +130,7 @@ async def model_status() -> dict:
 async def predict(
     file: Annotated[
         UploadFile,
-        File(description="A 2-channel Sentinel-1 SAR TIFF file (VV + VH bands)."),
+        File(description="A 1-channel Sentinel-1 SAR TIFF file (VV band)."),
     ],
 ) -> PredictResponse:
     """

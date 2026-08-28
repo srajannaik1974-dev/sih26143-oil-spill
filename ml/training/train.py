@@ -344,7 +344,7 @@ def train(args: argparse.Namespace) -> None:
 
     # ── Model ────────────────────────────────────────────────────────────────
     model = UNet(
-        in_channels   = 2,
+        in_channels   = 1,
         out_channels  = 1,
         base_features = args.base_features,
     ).to(device)

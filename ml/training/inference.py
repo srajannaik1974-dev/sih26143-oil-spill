@@ -19,7 +19,7 @@ Public API
 Input requirements
 ------------------
 - A Sentinel-1 SAR TIFF file.
-- Must contain exactly 2 bands (VV + VH channels), shape (2, H, W).
+- Must contain exactly 1 band (VV channel), shape (1, H, W).
 - dtype: float32, values typically in the range -48 to +11 dB.
 - The model was trained on 512×512 patches — the predictor automatically
   resizes the input before inference and returns the mask at the original
@@ -116,7 +116,7 @@ class OilSpillPredictor:
         saved_args    = ckpt.get("args", {})
         base_features = saved_args.get("base_features", 64)
 
-        model = UNet(in_channels=2, out_channels=1, base_features=base_features)
+        model = UNet(in_channels=1, out_channels=1, base_features=base_features)
         model.load_state_dict(ckpt["model_state"])
         model.to(self.device)
         model.eval()
@@ -124,37 +124,36 @@ class OilSpillPredictor:
 
     def _load_tiff(self, tiff_path: Path) -> Tuple[np.ndarray, tuple]:
         """
-        Load a 2-channel SAR TIFF.
-        Returns (array, original_shape) where array has shape (2, H, W).
+        Load a 1-channel SAR TIFF.
+        Returns (array, original_shape) where array has shape (1, H, W).
         """
         with rasterio.open(str(tiff_path)) as src:
             arr = src.read().astype(np.float32)  # (C, H, W)
 
-        if arr.ndim != 3 or arr.shape[0] != 2:
+        if arr.ndim != 3 or arr.shape[0] != 1:
             raise ValueError(
-                f"Expected a 2-channel TIFF, got shape {arr.shape}: {tiff_path}\n"
-                "This model only accepts Sentinel-1 VV+VH SAR imagery."
+                f"Expected a 1-channel TIFF, got shape {arr.shape}: {tiff_path}\n"
+                "This model only accepts Sentinel-1 VV SAR imagery."
             )
-        return arr, arr.shape[1:]  # (2, H, W), (H, W)
+        return arr, arr.shape[1:]  # (1, H, W), (H, W)
 
     def _preprocess(self, arr: np.ndarray) -> torch.Tensor:
         """
-        Normalise and resize a (2, H, W) array to (1, 2, size, size) tensor.
+        Normalise and resize a (1, H, W) array to (1, 1, size, size) tensor.
         """
         # Normalise each channel independently
         norm = arr.copy()
         norm[0] = normalise_sar_channel(norm[0])
-        norm[1] = normalise_sar_channel(norm[1])
 
         # Convert to tensor and add batch dimension
-        t = torch.from_numpy(norm).unsqueeze(0)  # (1, 2, H, W)
+        t = torch.from_numpy(norm).unsqueeze(0)  # (1, 1, H, W)
 
         # Resize to training size
         t = torch.nn.functional.interpolate(
             t, size=(self.image_size, self.image_size),
             mode="bilinear", align_corners=False,
         )
-        return t  # (1, 2, size, size)
+        return t  # (1, 1, size, size)
 
     def _postprocess(
         self,
@@ -199,7 +198,7 @@ class OilSpillPredictor:
         Parameters
         ----------
         tiff_path : str or Path
-            Path to a 2-channel Sentinel-1 SAR TIFF file.
+            Path to a 1-channel Sentinel-1 SAR TIFF file.
 
         Returns
         -------
@@ -216,7 +215,7 @@ class OilSpillPredictor:
         arr, original_shape = self._load_tiff(tiff_path)
 
         # Preprocess
-        tensor = self._preprocess(arr).to(self.device)  # (1, 2, size, size)
+        tensor = self._preprocess(arr).to(self.device)  # (1, 1, size, size)
 
         # Inference
         logits = self.model(tensor)  # (1, 1, size, size) raw logits
@@ -238,20 +237,18 @@ class OilSpillPredictor:
         figsize:   tuple = (20, 5),
     ) -> None:
         """
-        Run inference and display a 4-panel figure:
+        Run inference and display a 3-panel figure:
             [0] SAR Ch-0 (VV)
-            [1] SAR Ch-1 (VH)
-            [2] Confidence / probability map
-            [3] Binary prediction + colour overlay
+            [1] Confidence / probability map
+            [2] Binary prediction + colour overlay
         """
         tiff_path = Path(tiff_path)
         arr, original_shape = self._load_tiff(tiff_path)
 
         binary_mask, prob_map = self.predict(tiff_path)
 
-        # Normalised channels for display only (do NOT use for model input again)
+        # Normalised channel for display only (do NOT use for model input again)
         ch0_disp = normalise_sar_channel(arr[0])
-        ch1_disp = normalise_sar_channel(arr[1])
 
         # Overlay: ch0 greyscale + red for predicted oil
         overlay = np.stack([ch0_disp, ch0_disp, ch0_disp], axis=-1)
@@ -259,20 +256,17 @@ class OilSpillPredictor:
         overlay[binary_mask == 1, 1] = 0.15
         overlay[binary_mask == 1, 2] = 0.15
 
-        fig, axes = plt.subplots(1, 4, figsize=figsize)
+        fig, axes = plt.subplots(1, 3, figsize=figsize)
 
         axes[0].imshow(ch0_disp, cmap="gray", vmin=0, vmax=1)
         axes[0].set_title(f"SAR Ch-0 (VV)\n{tiff_path.name}", fontsize=9)
 
-        axes[1].imshow(ch1_disp, cmap="gray", vmin=0, vmax=1)
-        axes[1].set_title("SAR Ch-1 (VH)", fontsize=9)
+        im = axes[1].imshow(prob_map, cmap="RdYlGn_r", vmin=0, vmax=1)
+        axes[1].set_title(f"Probability Map\n(threshold={self.threshold})", fontsize=9)
+        plt.colorbar(im, ax=axes[1], fraction=0.046)
 
-        im = axes[2].imshow(prob_map, cmap="RdYlGn_r", vmin=0, vmax=1)
-        axes[2].set_title(f"Probability Map\n(threshold={self.threshold})", fontsize=9)
-        plt.colorbar(im, ax=axes[2], fraction=0.046)
-
-        axes[3].imshow(overlay, vmin=0, vmax=1)
-        axes[3].set_title("Predicted Oil Spill\n(red overlay)", fontsize=9)
+        axes[2].imshow(overlay, vmin=0, vmax=1)
+        axes[2].set_title("Predicted Oil Spill\n(red overlay)", fontsize=9)
 
         for ax in axes:
             ax.axis("off")
