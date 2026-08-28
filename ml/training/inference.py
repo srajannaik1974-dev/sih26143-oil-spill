@@ -231,6 +231,77 @@ class OilSpillPredictor:
 
         return binary_mask, prob_map
 
+    def get_spill_location(
+        self,
+        tiff_path: str | Path,
+        binary_mask: np.ndarray,
+        prob_map: np.ndarray,
+    ) -> dict:
+        """
+        Calculate geographic location, area and confidence
+        of the detected oil spill.
+        """
+        tiff_path = Path(tiff_path)
+
+        with rasterio.open(str(tiff_path)) as src:
+
+            if src.crs is None:
+                raise ValueError(
+                    f"TIFF has no CRS/geospatial information: {tiff_path}"
+                )
+
+            rows, cols = np.where(binary_mask == 1)
+
+            if len(rows) == 0:
+                return {
+                    "detected": False,
+                    "latitude": None,
+                    "longitude": None,
+                    "area_km2": 0.0,
+                    "area_percent": 0.0,
+                    "confidence": 0.0,
+                }
+
+            centroid_row = float(rows.mean())
+            centroid_col = float(cols.mean())
+
+            x, y = src.xy(centroid_row, centroid_col)
+
+            from rasterio.warp import transform
+
+            longitude, latitude = transform(
+                src.crs,
+                "EPSG:4326",
+                [x],
+                [y],
+            )
+
+            pixel_width = abs(src.transform.a)
+            pixel_height = abs(src.transform.e)
+            pixel_area_m2 = pixel_width * pixel_height
+
+            spill_pixels = len(rows)
+
+            area_m2 = spill_pixels * pixel_area_m2
+            area_km2 = area_m2 / 1_000_000
+
+            area_percent = (
+                100.0 * spill_pixels / binary_mask.size
+            )
+
+            confidence = float(
+                prob_map[binary_mask == 1].mean()
+            )
+
+            return {
+                "detected": True,
+                "latitude": float(latitude[0]),
+                "longitude": float(longitude[0]),
+                "area_km2": float(area_km2),
+                "area_percent": float(area_percent),
+                "confidence": confidence,
+            }
+
     def visualise(
         self,
         tiff_path: str | Path,
