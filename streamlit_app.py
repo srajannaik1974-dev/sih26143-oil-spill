@@ -339,14 +339,14 @@ with st.sidebar:
     st.markdown(
         "This tool uses a **U-Net deep learning model** trained on "
         "Sentinel-1 SAR satellite imagery to detect oil spills at sea.\n\n"
-        "Upload a 2-channel (VV + VH) Sentinel-1 TIFF to begin."
+        "Upload a 1-channel (VV) Sentinel-1 TIFF to begin."
     )
     st.markdown("---")
     st.markdown("### Model Info")
     st.markdown(f"- **Architecture:** U-Net (Keras/TensorFlow)")
     st.markdown(f"- **Input size:** {IMAGE_SIZE}×{IMAGE_SIZE} px")
     st.markdown(f"- **Detection threshold:** `{THRESHOLD}`")
-    st.markdown(f"- **Sensor:** Sentinel-1 SAR (VV + VH)")
+    st.markdown(f"- **Sensor:** Sentinel-1 SAR (VV)")
     st.markdown("---")
     st.markdown("### Team")
     st.markdown("SIH 2026 · Batch 2024 · AIML")
@@ -363,7 +363,7 @@ st.markdown(
         <p>
             SIH 2026 · Problem Statement 26143 &nbsp;|&nbsp;
             U-Net Semantic Segmentation &nbsp;|&nbsp;
-            Sentinel-1 VV + VH SAR Imagery
+            Sentinel-1 VV SAR Imagery
         </p>
     </div>
     """,

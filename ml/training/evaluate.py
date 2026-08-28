@@ -156,13 +156,11 @@ def visualise_predictions(
     threshold: float = 0.5,
 ) -> None:
     """
-    Display n prediction panels.
-    Each panel shows 5 sub-plots:
-        [0] SAR Channel 0 (VV)
-        [1] SAR Channel 1 (VH)
-        [2] Ground-truth mask
-        [3] Predicted binary mask
-        [4] Overlay (pred mask on top of SAR ch0)
+    - Display up to n_display predictions (4-panel figure).
+        [0] SAR Channel (VV)
+        [1] Ground-truth Mask
+        [2] Predicted Mask
+        [3] Overlay (pred mask on top of SAR ch0)
     """
     n = min(n, len(test_ds))
     model.eval()
@@ -177,11 +175,10 @@ def visualise_predictions(
         pred    = (prob > threshold).astype(np.float32)          # (H, W) binary
 
         # Tensors → numpy for plotting
-        img_np  = image_t.numpy()   # (2, H, W)
+        img_np  = image_t.numpy()   # (1, H, W)
         mask_np = mask_t.squeeze().numpy()  # (H, W)
 
         ch0 = img_np[0]  # VV polarisation
-        ch1 = img_np[1]  # VH polarisation
 
         # Build overlay: SAR ch0 as greyscale + predicted mask as red tint
         rgb_base = np.stack([ch0, ch0, ch0], axis=-1)            # (H, W, 3)
@@ -191,12 +188,11 @@ def visualise_predictions(
         overlay[pred > 0.5, 2] = 0.2
 
         # Plot
-        fig = plt.figure(figsize=(20, 4))
-        gs  = gridspec.GridSpec(1, 5, figure=fig, wspace=0.05)
+        fig = plt.figure(figsize=(16, 4))
+        gs  = gridspec.GridSpec(1, 4, figure=fig, wspace=0.05)
 
         axes_data = [
             (ch0,      "gray",    f"SAR Ch-0 (VV)\n{fname}"),
-            (ch1,      "gray",    "SAR Ch-1 (VH)"),
             (mask_np,  "binary",  "Ground-truth Mask"),
             (pred,     "binary",  f"Predicted Mask\n(thresh={threshold})"),
             (overlay,  None,      "Overlay\n(red = predicted oil)"),

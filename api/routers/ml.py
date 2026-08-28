@@ -139,7 +139,7 @@ async def predict(
     Upload a Sentinel-1 SAR TIFF image and receive oil-spill detection results.
 
     **Required file format:**
-    - TIFF with exactly **2 bands** (VV polarisation channel 0, VH channel 1)
+    - TIFF with exactly **1 band** (VV polarisation)
     - dtype: float32, values approximately -48 to +11 dB
     - Typical size: 2048 × 2048 pixels
 

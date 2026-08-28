@@ -479,8 +479,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size",    type=int,   default=4,
                         help="Conservative default — increase if you have ≥16 GB VRAM.")
     parser.add_argument("--lr",            type=float, default=1e-4)
-    parser.add_argument("--image-size",    type=int,   default=512)
-    parser.add_argument("--base-features", type=int,   default=64,
+    parser.add_argument("--image-size",    type=int,   default=256)
+    parser.add_argument("--base-features", type=int,   default=32,
                         help="U-Net base feature count. Use 32 to reduce VRAM.")
     parser.add_argument("--patience",      type=int,   default=10,
                         help="Early stopping patience (epochs without improvement).")

@@ -149,7 +149,7 @@ class UNet(nn.Module):
         self,
         in_channels:   int = 1,
         out_channels:  int = 1,
-        base_features: int = 64,
+        base_features: int = 32,
     ) -> None:
         super().__init__()
 
@@ -211,7 +211,7 @@ class UNet(nn.Module):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    model = UNet(in_channels=1, out_channels=1, base_features=64)
+    model = UNet(in_channels=1, out_channels=1, base_features=32)
     print(f"U-Net parameters: {model.count_parameters():,}")
 
     # Simulate a batch of 2 images at 512x512 with 1 SAR channel
