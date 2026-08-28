@@ -454,6 +454,18 @@ if uploaded_file is not None:
                 st.metric("Coverage", f"{spill_info['area_percent']:.2f}%")
             with loc_cols[4]:
                 st.metric("Detection Conf", f"{spill_info['confidence']:.3f}")
+
+            st.markdown("### 🗺️ Spill Location Map")
+            if spill_info['latitude'] is not None and spill_info['longitude'] is not None:
+                import pandas as pd
+                df_map = pd.DataFrame({
+                    "lat": [spill_info['latitude']],
+                    "lon": [spill_info['longitude']]
+                })
+                st.map(df_map, zoom=10)
+                st.caption("Marker represents the estimated centroid of the detected oil spill.")
+            else:
+                st.warning("⚠️ Geospatial data (latitude/longitude) is missing from this TIFF file, so the map cannot be displayed.")
         else:
             st.markdown(
                 '<span class="badge-clean">✅ NO OIL SPILL DETECTED</span>',
