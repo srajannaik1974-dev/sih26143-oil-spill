@@ -222,6 +222,7 @@ def _run_inference(file_bytes: bytes, filename: str):
     binary_mask : np.ndarray (H, W) uint8   {0, 1}    at original resolution
     prob_map    : np.ndarray (H, W) float32 [0, 1]    at original resolution
     sar_disp    : np.ndarray (H, W) float32 [0, 1]    VV, normalised
+    spill_info  : dict                              Geospatial metadata
     """
     import tempfile
     import rasterio
@@ -245,7 +246,13 @@ def _run_inference(file_bytes: bytes, filename: str):
         
         sar_disp = normalise_sar_channel(arr[0])
 
-        return binary_mask, prob_map, sar_disp
+        spill_info = predictor.get_spill_location(
+            tmp_path,
+            binary_mask,
+            prob_map,
+        )
+
+        return binary_mask, prob_map, sar_disp, spill_info
     finally:
         try:
             tmp_path.unlink()
@@ -398,7 +405,7 @@ if uploaded_file is not None:
 
     with st.spinner("Loading model and running inference — please wait…"):
         try:
-            binary_mask, prob_map, sar_disp = _run_inference(file_bytes, uploaded_file.name)
+            binary_mask, prob_map, sar_disp, spill_info = _run_inference(file_bytes, uploaded_file.name)
             inference_ok = True
         except FileNotFoundError as e:
             st.error(f"**Model not found:**\n\n{e}")
@@ -431,6 +438,22 @@ if uploaded_file is not None:
                 '<span class="badge-spill">⚠️ OIL SPILL DETECTED</span>',
                 unsafe_allow_html=True,
             )
+            
+            st.markdown("### 📍 Spill Location Information")
+            lat_str = f"{spill_info['latitude']:.4f}°" if spill_info['latitude'] is not None else "N/A"
+            lon_str = f"{spill_info['longitude']:.4f}°" if spill_info['longitude'] is not None else "N/A"
+            
+            loc_cols = st.columns(5)
+            with loc_cols[0]:
+                st.metric("Latitude", lat_str)
+            with loc_cols[1]:
+                st.metric("Longitude", lon_str)
+            with loc_cols[2]:
+                st.metric("Spill Area", f"{spill_info['area_km2']:.2f} km²")
+            with loc_cols[3]:
+                st.metric("Coverage", f"{spill_info['area_percent']:.2f}%")
+            with loc_cols[4]:
+                st.metric("Detection Conf", f"{spill_info['confidence']:.3f}")
         else:
             st.markdown(
                 '<span class="badge-clean">✅ NO OIL SPILL DETECTED</span>',
