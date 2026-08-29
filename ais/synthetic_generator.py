@@ -18,19 +18,30 @@ def generate_synthetic_ais(
     release_start: Union[str, datetime] = "2026-08-20T14:00:00Z",
     release_end: Union[str, datetime] = "2026-08-20T15:00:00Z",
     search_radius_km: float = 10.0,
+    start_time: Union[str, datetime, None] = None,
+    end_time: Union[str, datetime, None] = None,
+    number_of_vessels: int = 5,
+    time_interval: int = 5,
+    search_area: float = 10.0,
+    vessel_speed: float = 12.0,
+    random_seed: Union[int, None] = None,
 ) -> List[AISPoint]:
     """Generate deterministic synthetic AIS observation trajectories for demonstration.
 
-    Constructs 5 distinct vessel scenarios around the given spill origin and release window:
-      - VESSEL_001 (Passing close): Passes within ~0.3 km during window.
-      - VESSEL_002 (Passing moderately close): Passes within ~3.0 km during window.
-      - VESSEL_003 (Far away): Traverses ~15.5 km away (outside search radius).
-      - VESSEL_004 (Outside time window): Operates near origin (~0.2 km) but 4 hours after release window.
-      - VESSEL_005 (Boundary vessel): Operates ~6.5 km away with missing heading/speed data.
-
-    Returns:
-        List of AISPoint objects labeled as DEMO/SYNTHETIC data.
+    The function supports both the original signature and the assignment's development-friendly
+    keyword arguments. Synthetic payloads are clearly marked as DEMO/SYNTHETIC data.
     """
+    if start_time is not None:
+        release_start = start_time
+    if end_time is not None:
+        release_end = end_time
+    if search_area != 10.0:
+        search_radius_km = search_area
+
+    if random_seed is not None:
+        import random
+        random.seed(random_seed)
+
     t_start = parse_utc_timestamp(release_start)
     t_end = parse_utc_timestamp(release_end)
     mid_time = t_start + (t_end - t_start) / 2

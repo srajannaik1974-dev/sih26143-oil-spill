@@ -154,3 +154,8 @@ def clean_ais_records(raw_records: List[Dict[str, Any]]) -> List[AISPoint]:
 
     return valid_points
 
+
+def clean_ais_data(raw_records: List[Dict[str, Any]]) -> List[AISPoint]:
+    """Public alias for validation, deduplication, and UTC normalization of raw AIS records."""
+    return clean_ais_records(raw_records)
+

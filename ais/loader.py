@@ -20,13 +20,17 @@ COLUMN_PRIORITY: Dict[str, List[str]] = {
         "datetime",
         "time",
         "base_datetime",
+        "basedatetime",
+        "BaseDateTime",
         "date_time",
+        "dateTime",
         "ts",
         "event_time",
     ],
     "latitude": [
         "latitude",
         "lat",
+        "LAT",
         "lat_deg",
         "lat_dd",
         "y",
@@ -34,6 +38,7 @@ COLUMN_PRIORITY: Dict[str, List[str]] = {
     "longitude": [
         "longitude",
         "lon",
+        "LON",
         "lng",
         "lon_deg",
         "lon_dd",
@@ -43,6 +48,7 @@ COLUMN_PRIORITY: Dict[str, List[str]] = {
         "speed_knots",
         "speed_kts",
         "sog",
+        "SOG",
         "speed",
         "speedoverground",
     ],
@@ -50,6 +56,7 @@ COLUMN_PRIORITY: Dict[str, List[str]] = {
         "heading_deg",
         "heading",
         "cog",
+        "COG",
         "course",
         "courseoverground",
         "true_heading",
@@ -234,3 +241,8 @@ def load_ais_file(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
         return load_ais_json(path)
     else:
         raise ValueError(f"Unsupported file format '{suffix}'. Supported formats: .csv, .json")
+
+
+def load_ais_data(file_path: Union[str, Path]) -> List[Dict[str, Any]]:
+    """Public alias for loading AIS data from CSV/JSON with canonical field mapping."""
+    return load_ais_file(file_path)

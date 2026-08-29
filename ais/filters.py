@@ -10,6 +10,16 @@ from .schemas import AISPoint, CandidateOutput, CandidateVessel, VesselTrajector
 EARTH_RADIUS_KM: float = 6371.0088
 
 
+def calculate_distance_km(
+    lat1: float,
+    lon1: float,
+    lat2: float,
+    lon2: float,
+) -> float:
+    """Public alias for the Haversine geographic distance calculation in kilometers."""
+    return haversine_distance(lat1, lon1, lat2, lon2)
+
+
 def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate the great-circle distance between two geographic coordinates in kilometers.
 
@@ -174,4 +184,69 @@ def find_candidate_vessels(
     candidates.sort(key=lambda c: c.closest_distance_km)
 
     return CandidateOutput(spill_id=spill_id, candidates=candidates)
+
+
+def filter_vessels_by_time(
+    points: List[AISPoint],
+    release_start: Union[str, datetime],
+    release_end: Union[str, datetime],
+) -> List[AISPoint]:
+    """Public wrapper returning AIS observations within a release time window."""
+    return filter_by_time_window(points, release_start, release_end)
+
+
+def filter_vessels_by_distance(
+    points: List[AISPoint],
+    origin_lat: float,
+    origin_lon: float,
+    search_radius_km: float,
+) -> List[Tuple[AISPoint, float]]:
+    """Public wrapper returning AIS points within the configured search radius."""
+    return filter_by_distance(points, origin_lat, origin_lon, search_radius_km)
+
+
+def get_candidate_vessels(
+    ais_data: Union[Dict[str, VesselTrajectory], List[AISPoint]],
+    origin_lat: float,
+    origin_lon: float,
+    release_start: Union[str, datetime],
+    release_end: Union[str, datetime],
+    search_radius_km: float = 10.0,
+    spill_id: str = "SPILL_001",
+) -> Dict[str, object]:
+    """Return the standardized candidate-vessel payload expected by the attribution module."""
+    result = find_candidate_vessels(
+        trajectories=ais_data,
+        origin_lat=origin_lat,
+        origin_lon=origin_lon,
+        release_start=release_start,
+        release_end=release_end,
+        search_radius_km=search_radius_km,
+        spill_id=spill_id,
+    )
+
+    candidates = []
+    for candidate in result.candidates:
+        candidates.append(
+            {
+                "vessel_id": candidate.vessel_id,
+                "closest_distance_km": round(candidate.closest_distance_km, 3),
+                "closest_timestamp": candidate.closest_timestamp,
+                "latitude": candidate.latitude,
+                "longitude": candidate.longitude,
+                "speed_knots": candidate.speed_knots,
+                "heading_deg": candidate.heading_deg,
+            }
+        )
+
+    return {
+        "spill_id": result.spill_id,
+        "origin": {"latitude": float(origin_lat), "longitude": float(origin_lon)},
+        "release_window": {
+            "start": parse_utc_timestamp(release_start).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "end": parse_utc_timestamp(release_end).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        },
+        "search_radius_km": float(search_radius_km),
+        "candidate_vessels": candidates,
+    }
 
