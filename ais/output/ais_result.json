@@ -1,0 +1,138 @@
+{
+  "spill": {
+    "latitude": 12.85,
+    "longitude": 74.72,
+    "estimated_time": "2026-08-20T14:30:00Z"
+  },
+  "search_parameters": {
+    "radius_km": 10.0,
+    "time_window_minutes": 30.0
+  },
+  "candidate_vessels": [
+    {
+      "mmsi": "123456789",
+      "vessel_name": "TEST OCEAN",
+      "vessel_type": "Tanker",
+      "imo": "9123456",
+      "latitude": 12.852,
+      "longitude": 74.718,
+      "closest_record_time": "2026-08-20T14:29:00Z",
+      "minimum_distance_km": 0.31,
+      "time_difference_minutes": 1.0,
+      "observations": 5,
+      "candidate_score": 97.3,
+      "ais_records": [
+        {
+          "timestamp": "2026-08-20T14:27:00Z",
+          "latitude": 12.854,
+          "longitude": 74.716,
+          "sog": 12.0,
+          "cog": 140.0,
+          "heading": 140.0
+        },
+        {
+          "timestamp": "2026-08-20T14:28:00Z",
+          "latitude": 12.853,
+          "longitude": 74.717,
+          "sog": 12.2,
+          "cog": 140.0,
+          "heading": 141.0
+        },
+        {
+          "timestamp": "2026-08-20T14:29:00Z",
+          "latitude": 12.852,
+          "longitude": 74.718,
+          "sog": 12.4,
+          "cog": 140.0,
+          "heading": 142.0
+        },
+        {
+          "timestamp": "2026-08-20T14:30:00Z",
+          "latitude": 12.853,
+          "longitude": 74.7165,
+          "sog": 12.5,
+          "cog": 140.0,
+          "heading": 142.0
+        },
+        {
+          "timestamp": "2026-08-20T14:31:00Z",
+          "latitude": 12.854,
+          "longitude": 74.715,
+          "sog": 12.3,
+          "cog": 140.0,
+          "heading": 141.0
+        }
+      ]
+    },
+    {
+      "mmsi": "987654321",
+      "vessel_name": "TEST CARRIER",
+      "vessel_type": "Cargo",
+      "imo": "9654321",
+      "latitude": 12.875,
+      "longitude": 74.73,
+      "closest_record_time": "2026-08-20T14:25:00Z",
+      "minimum_distance_km": 2.98,
+      "time_difference_minutes": 5.0,
+      "observations": 3,
+      "candidate_score": 74.3,
+      "ais_records": [
+        {
+          "timestamp": "2026-08-20T14:25:00Z",
+          "latitude": 12.875,
+          "longitude": 74.73,
+          "sog": 14.1,
+          "cog": 210.0,
+          "heading": 208.0
+        },
+        {
+          "timestamp": "2026-08-20T14:35:00Z",
+          "latitude": 12.877,
+          "longitude": 74.732,
+          "sog": 14.0,
+          "cog": 210.0,
+          "heading": 209.0
+        },
+        {
+          "timestamp": "2026-08-20T14:40:00Z",
+          "latitude": 12.88,
+          "longitude": 74.735,
+          "sog": 13.9,
+          "cog": 210.0,
+          "heading": 210.0
+        }
+      ]
+    },
+    {
+      "mmsi": "555555555",
+      "vessel_name": "TEST MARINE",
+      "vessel_type": "Fishing",
+      "imo": "8555555",
+      "latitude": 12.792,
+      "longitude": 74.762,
+      "closest_record_time": "2026-08-20T14:42:00Z",
+      "minimum_distance_km": 7.89,
+      "time_difference_minutes": 12.0,
+      "observations": 2,
+      "candidate_score": 37.3,
+      "ais_records": [
+        {
+          "timestamp": "2026-08-20T14:18:00Z",
+          "latitude": 12.79,
+          "longitude": 74.76,
+          "sog": 6.2,
+          "cog": 95.0,
+          "heading": 90.0
+        },
+        {
+          "timestamp": "2026-08-20T14:42:00Z",
+          "latitude": 12.792,
+          "longitude": 74.762,
+          "sog": 6.0,
+          "cog": 95.0,
+          "heading": 92.0
+        }
+      ]
+    }
+  ]
+}
