@@ -93,7 +93,7 @@ st.markdown(
         align-items: center;
         padding: 1rem 0;
         border-bottom: 1px solid rgba(255,255,255,0.1);
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
     }
     .brand {
         display: flex;
@@ -123,92 +123,138 @@ st.markdown(
         font-weight: 500;
         font-size: 0.95rem;
         transition: color 0.2s;
+        border-bottom: 2px solid transparent;
+        padding-bottom: 4px;
     }
-    .nav-links a:hover {
+    .nav-links a:hover, .nav-links a.active {
         color: #58a6ff;
+        border-bottom: 2px solid #58a6ff;
     }
 
-    /* ── Cards and Layout ── */
-    .info-card {
-        background: rgba(10, 30, 60, 0.5);
-        border: 1px solid rgba(88, 166, 255, 0.2);
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        backdrop-filter: blur(8px);
-    }
-    .section-title {
-        font-size: 1.25rem;
-        font-weight: 600;
+    /* ── Main Layout Elements ── */
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
         color: #ffffff;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        padding-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: #8b949e;
+        max-width: 600px;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+
+    .results-container {
+        background: rgba(10, 20, 40, 0.6);
+        border: 1px solid rgba(88, 166, 255, 0.15);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 1rem;
+        backdrop-filter: blur(12px);
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #58a6ff;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     /* ── Key-Value Rows ── */
     .kv-row {
         display: flex;
         justify-content: space-between;
-        padding: 0.6rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .kv-row:last-child {
-        border-bottom: none;
+        align-items: center;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(88, 166, 255, 0.1);
+        border-radius: 8px;
+        margin-bottom: 0.6rem;
+        background: rgba(255, 255, 255, 0.02);
     }
     .kv-key {
-        color: #8b949e;
+        color: #c9d1d9;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
     }
     .kv-val {
-        color: #ffffff;
+        color: #58a6ff;
         font-weight: 600;
+        font-size: 1rem;
     }
 
     /* ── Status Indicators ── */
-    .status-success {
-        color: #3fb950;
-        font-weight: 700;
-        font-size: 1.2rem;
+    .status-badge {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 1rem;
+        justify-content: center;
+        gap: 10px;
+        padding: 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .status-success {
+        background: rgba(63, 185, 80, 0.1);
+        border: 1px solid rgba(63, 185, 80, 0.3);
+        color: #3fb950;
     }
     .status-danger {
+        background: rgba(248, 81, 73, 0.1);
+        border: 1px solid rgba(248, 81, 73, 0.3);
         color: #f85149;
-        font-weight: 700;
-        font-size: 1.2rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 1rem;
     }
 
     /* ── Uploader ── */
     [data-testid="stFileUploader"] {
-        border: 2px dashed rgba(88, 166, 255, 0.35) !important;
+        border: 1px solid rgba(88, 166, 255, 0.3) !important;
         border-radius: 12px !important;
-        background: rgba(10, 30, 60, 0.4) !important;
+        background: rgba(10, 20, 40, 0.5) !important;
         padding: 2rem !important;
+        max-width: 600px;
+        backdrop-filter: blur(8px);
     }
 
     /* ── Footer ── */
     .footer-tech {
         display: flex;
-        justify-content: space-around;
-        padding: 2rem;
-        background: rgba(0,0,0,0.25);
-        border-radius: 8px;
+        justify-content: space-between;
+        gap: 1rem;
         margin: 3rem 0 1.5rem 0;
-        text-align: center;
     }
-    .footer-tech div {
+    .footer-card {
         flex: 1;
-        border-right: 1px solid rgba(255,255,255,0.1);
+        background: rgba(10, 20, 40, 0.6);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
-    .footer-tech div:last-child {
-        border-right: none;
+    .footer-card-icon {
+        font-size: 2rem;
+    }
+    .footer-card-content h4 {
+        margin: 0 0 0.3rem 0;
+        color: #58a6ff;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+    .footer-card-content p {
+        margin: 0;
+        color: #8b949e;
+        font-size: 0.8rem;
+        line-height: 1.4;
     }
     .footer-text {
         text-align: center;
@@ -370,20 +416,24 @@ def _build_figure(
 # State management & Navigation
 # ==============================================================================
 
+# ==============================================================================
+# State management & Navigation
+# ==============================================================================
+
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
 
 st.markdown("""
 <div class="navbar">
     <div class="brand">
-        <div class="brand-icon">💧</div>
+        <div class="brand-icon">🌊</div>
         <div class="brand-text">
             <h1>OceanWatch</h1>
             <p>Oil Spill Detection System</p>
         </div>
     </div>
     <div class="nav-links">
-        <a href="#">Home</a>
+        <a href="#" class="active">Home</a>
         <a href="#">About</a>
     </div>
 </div>
@@ -393,28 +443,26 @@ st.markdown("""
 # Hero & File uploader
 # ==============================================================================
 
+st.markdown("""
+<div>
+    <h1 class="hero-title">Oil Spill Detection</h1>
+    <p class="hero-subtitle">
+        Advanced AI-powered system for detecting oil spills in SAR satellite imagery
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
 uploaded_file = st.file_uploader(
     "Upload SAR Image (TIFF)",
     type=["tif", "tiff"],
-    help="Supported: .tif / .tiff | Sentinel-1 VV polarization • 1-band",
+    help="Supports: .tif, .tiff (1-band VV polarization)",
     key=f"uploader_{st.session_state.uploader_key}"
 )
-
-if uploaded_file is None:
-    st.markdown("""
-    <div style="padding: 2rem 0; max-width: 700px;">
-        <h1 style="font-size: 2.8rem; margin-bottom: 1rem; color: #ffffff; font-weight: 700;">Oil Spill Detection</h1>
-        <p style="font-size: 1.1rem; color: #8b949e; line-height: 1.6;">
-            Advanced AI-powered system for detecting oil spills in SAR satellite imagery.
-            Upload your Sentinel-1 VV polarization TIFF file below to begin analysis.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # Inference & results
 # ==============================================================================
-else:
+if uploaded_file is not None:
     file_bytes = uploaded_file.read()
 
     with st.spinner("Analyzing SAR imagery..."):
@@ -427,107 +475,71 @@ else:
 
     if inference_ok:
         # ── Compute base statistics ──
-        h, w         = binary_mask.shape
         spill_pixels = int(binary_mask.sum())
         spill_det    = spill_pixels > 0
         date_str     = spill_info.get("date", "Unknown")
         time_str     = "14:30 UTC"  # Fixed synthetic time for prototype
 
-        # ── Top Action Bar ──
-        col_hdr1, col_hdr2 = st.columns([4, 1])
-        with col_hdr1:
-            st.markdown("""
-            <div style="margin-bottom: 2rem;">
-                <h2 style="color: #ffffff; margin: 0; display: flex; align-items: center; gap: 10px;">
-                    <span style="color: #3fb950;">✓</span> Analysis Complete
-                </h2>
-                <p style="color: #8b949e; margin-top: 0.5rem;">We've analyzed your SAR image and detected potential oil spill.</p>
-            </div>
-            """, unsafe_allow_html=True)
-        with col_hdr2:
-            if st.button("New Analysis", use_container_width=True):
-                st.session_state.uploader_key += 1
-                st.rerun()
-
-        # ── Uploaded Image Information ──
-        st.markdown('<div class="section-title">Uploaded Image Information</div>', unsafe_allow_html=True)
+        st.markdown('<div class="results-container">', unsafe_allow_html=True)
         
-        st.markdown(f"""
-        <div class="info-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div style="flex: 2; min-width: 200px;">
-                <div style="font-size: 1.15rem; color: #ffffff; font-weight: 600; margin-bottom: 0.2rem;">{uploaded_file.name}</div>
-                <div style="color: #8b949e; font-size: 0.9rem;">SAR Image • 1-band VV</div>
-            </div>
-            <div style="flex: 1; text-align: left; min-width: 120px;">
-                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Date</div>
-                <div class="kv-val">{date_str}</div>
-            </div>
-            <div style="flex: 1; text-align: left; min-width: 120px;">
-                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Time</div>
-                <div class="kv-val">{time_str}</div>
-            </div>
-            <div style="flex: 1; text-align: left; min-width: 120px;">
-                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Image Size</div>
-                <div class="kv-val">{w} × {h}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ── Detection Information & Map ──
-        col_info, col_map = st.columns([1, 1.5], gap="large")
+        col_info, col_map = st.columns([1, 2.2], gap="large")
         
         with col_info:
-            st.markdown('<div class="section-title">Detection Information</div>', unsafe_allow_html=True)
-            st.markdown('<div class="info-card">', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Detection Results</div>', unsafe_allow_html=True)
             
             if spill_det:
-                st.markdown('<div class="status-danger">⚠️ Oil Spill Detected</div>', unsafe_allow_html=True)
-            else:
-                st.markdown('<div class="status-success">✓ No Oil Spill Detected</div>', unsafe_allow_html=True)
+                st.markdown('<div class="status-badge status-danger">OIL SPILL DETECTED</div>', unsafe_allow_html=True)
                 
-            lat_str = f"{spill_info['latitude']:.4f}°" if spill_info['latitude'] is not None else "N/A"
-            lon_str = f"{spill_info['longitude']:.4f}°" if spill_info['longitude'] is not None else "N/A"
-            area_str = f"{spill_info['area_km2']:.3f} km²"
-            cov_str = f"{spill_info['area_percent']:.2f}%"
-            conf_str = f"{spill_info['confidence']*100:.2f}%"
+                lat_str = f"{spill_info['latitude']:.4f}°" if spill_info['latitude'] is not None else "N/A"
+                lon_str = f"{spill_info['longitude']:.4f}°" if spill_info['longitude'] is not None else "N/A"
+                area_str = f"{spill_info['area_km2']:.4f} km²"
+                cov_str = f"{spill_info['area_percent']:.2f}%"
+                conf_str = f"{spill_info['confidence']*100:.2f}%"
 
-            rows = [
-                ("Latitude", lat_str),
-                ("Longitude", lon_str),
-                ("Spill Area", area_str),
-                ("Area Coverage", cov_str),
-                ("Confidence", conf_str),
-                ("Date", date_str),
-                ("Time", time_str),
-            ]
-            
-            for k, v in rows:
-                st.markdown(f'<div class="kv-row"><span class="kv-key">{k}</span><span class="kv-val">{v}</span></div>', unsafe_allow_html=True)
-            
-            st.markdown('<div style="font-size: 0.75rem; color: #8b949e; margin-top: 1.5rem; text-align: right;">Prototype observation time</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+                rows = [
+                    ("Latitude", lat_str, "📍"),
+                    ("Longitude", lon_str, "🌐"),
+                    ("Spill Area", area_str, "💧"),
+                    ("Area Coverage", cov_str, "📊"),
+                    ("Confidence", conf_str, "🛡️"),
+                    ("Date", date_str, "📅"),
+                    ("Time", time_str, "🕒"),
+                ]
+                
+                for k, v, icon in rows:
+                    st.markdown(f'''
+                    <div class="kv-row">
+                        <span class="kv-key"><span style="width: 20px; text-align: center;">{icon}</span> {k}</span>
+                        <span class="kv-val">{v}</span>
+                    </div>
+                    ''', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="status-badge status-success">✅ NO OIL SPILL DETECTED</div>', unsafe_allow_html=True)
+                # No misleading coordinates shown if no spill
 
         with col_map:
-            st.markdown('<div class="section-title">Detection Map</div>', unsafe_allow_html=True)
-            if spill_info['latitude'] is not None and spill_info['longitude'] is not None:
+            st.markdown('<div class="section-title">Spill Location</div>', unsafe_allow_html=True)
+            
+            # Map Section
+            if spill_det and spill_info['latitude'] is not None and spill_info['longitude'] is not None:
                 df_map = pd.DataFrame({
                     "lat": [spill_info['latitude']],
                     "lon": [spill_info['longitude']]
                 })
-                # Wrap the map in an info card to match theme styling
-                st.markdown('<div class="info-card" style="padding: 1rem;">', unsafe_allow_html=True)
                 st.map(df_map, zoom=10, use_container_width=True)
-                st.caption("Estimated spill centroid")
-                st.markdown('</div>', unsafe_allow_html=True)
+            elif not spill_det:
+                pass 
             else:
                 st.info("No geospatial coordinates available for mapping.")
 
-        # ── Detection Visualization ──
-        st.markdown('<div class="section-title" style="margin-top: 2rem;">Detection Visualization</div>', unsafe_allow_html=True)
-        st.markdown('<div class="info-card" style="padding: 1rem;">', unsafe_allow_html=True)
-        fig = _build_figure(sar_disp, prob_map, binary_mask)
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
+            st.markdown('<div style="margin-top: 1.5rem;"></div>', unsafe_allow_html=True)
+            
+            # Matplotlib Visualizations
+            st.markdown('<div class="section-title">Detection Visualization</div>', unsafe_allow_html=True)
+            fig = _build_figure(sar_disp, prob_map, binary_mask)
+            st.pyplot(fig, use_container_width=True)
+            plt.close(fig)
+
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================================
@@ -535,21 +547,33 @@ else:
 # ==============================================================================
 st.markdown("""
 <div class="footer-tech">
-    <div>
-        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">Sentinel-1 SAR</div>
-        <div style="font-size: 0.85rem; color: #8b949e;">VV Polarization</div>
+    <div class="footer-card">
+        <div class="footer-card-icon">🛰️</div>
+        <div class="footer-card-content">
+            <h4>Sentinel-1 SAR</h4>
+            <p>VV Polarization</p>
+        </div>
     </div>
-    <div>
-        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">U-Net Deep Learning</div>
-        <div style="font-size: 0.85rem; color: #8b949e;">AI Powered</div>
+    <div class="footer-card">
+        <div class="footer-card-icon">🧠</div>
+        <div class="footer-card-content">
+            <h4>U-Net Deep Learning</h4>
+            <p>Model</p>
+        </div>
     </div>
-    <div>
-        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">High Accuracy</div>
-        <div style="font-size: 0.85rem; color: #8b949e;">Advanced Detection</div>
+    <div class="footer-card">
+        <div class="footer-card-icon">🎯</div>
+        <div class="footer-card-content">
+            <h4>Advanced Detection</h4>
+            <p>Algorithms</p>
+        </div>
     </div>
-    <div>
-        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">Marine Monitoring</div>
-        <div style="font-size: 0.85rem; color: #8b949e;">Ocean Surveillance</div>
+    <div class="footer-card">
+        <div class="footer-card-icon">🌊</div>
+        <div class="footer-card-content">
+            <h4>Marine Monitoring</h4>
+            <p>Real-time Ocean<br>Surveillance</p>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
