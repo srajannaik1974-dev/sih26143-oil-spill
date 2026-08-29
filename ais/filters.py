@@ -168,6 +168,7 @@ def find_candidate_vessels(
 
         # 3. Spatial filter threshold
         if min_dist <= search_radius_km:
+            time_diff_minutes = abs((closest_point.timestamp - t_start).total_seconds() / 60.0)
             candidates.append(
                 CandidateVessel(
                     vessel_id=vessel_id,
@@ -177,6 +178,7 @@ def find_candidate_vessels(
                     longitude=closest_point.longitude,
                     speed_knots=closest_point.speed_knots,
                     heading_deg=closest_point.heading_deg,
+                    time_difference_minutes=round(time_diff_minutes, 2),
                 )
             )
 
@@ -232,6 +234,7 @@ def get_candidate_vessels(
                 "vessel_id": candidate.vessel_id,
                 "closest_distance_km": round(candidate.closest_distance_km, 3),
                 "closest_timestamp": candidate.closest_timestamp,
+                "time_difference_minutes": round(candidate.time_difference_minutes, 2) if candidate.time_difference_minutes is not None else None,
                 "latitude": candidate.latitude,
                 "longitude": candidate.longitude,
                 "speed_knots": candidate.speed_knots,

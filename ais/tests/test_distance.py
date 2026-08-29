@@ -1,7 +1,8 @@
 """Unit tests for Haversine geographic distance calculations."""
 
 import unittest
-from ais.src.distance import haversine_distance
+
+from ais.filters import haversine_distance
 
 
 class TestDistance(unittest.TestCase):

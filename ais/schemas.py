@@ -75,6 +75,7 @@ class CandidateVessel:
     longitude: float
     speed_knots: Optional[float] = None
     heading_deg: Optional[float] = None
+    time_difference_minutes: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize candidate vessel to the standard output format."""
@@ -82,6 +83,7 @@ class CandidateVessel:
             "vessel_id": self.vessel_id,
             "closest_distance_km": round(self.closest_distance_km, 3),
             "closest_timestamp": self.closest_timestamp,
+            "time_difference_minutes": round(self.time_difference_minutes, 2) if self.time_difference_minutes is not None else None,
             "latitude": self.latitude,
             "longitude": self.longitude,
             "speed_knots": self.speed_knots,

@@ -7,7 +7,7 @@
 
 **Automatic Identification System (AIS)** is a maritime transponder tracking protocol broadcasting ship identification, GPS coordinates, UTC timestamps, Speed Over Ground (SOG), and Course/Heading telemetry.
 
-This project uses a single canonical implementation under the `ais/` package as the source of truth. The legacy `ais/src/` tree is retained only as a compatibility layer so older imports do not break while the codebase converges on one AIS architecture.
+This project uses a single canonical implementation under the `ais/` package as the source of truth. The duplicate legacy `ais/src/` tree has been removed so the AIS module consists of one authoritative implementation only.
 
 In the **SIH 26143 Oil Spill Investigation System**, this module operates independently as **Member 3's core responsibility**. Given a probable spill origin (coordinates) and estimated release time window (from Member 2's drift & backtracking module), this module:
 1. Ingests raw historical AIS data (CSV or JSON).
