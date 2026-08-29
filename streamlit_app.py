@@ -48,14 +48,14 @@ REQUIRED_CHANNELS = 1
 # ==============================================================================
 
 st.set_page_config(
-    page_title="SIH 2026 | Oil Spill Detection",
-    page_icon="🛢️",
+    page_title="OceanWatch | Oil Spill Detection",
+    page_icon="🌊",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ==============================================================================
-# Custom CSS — clean, dark SIH-demo aesthetic
+# Custom CSS — OceanWatch Theme
 # ==============================================================================
 
 st.markdown(
@@ -67,123 +67,154 @@ st.markdown(
         font-family: 'Inter', sans-serif;
     }
 
-    /* ── Page background ── */
+    /* ── Page background with subtle animation ── */
     .stApp {
-        background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #0d1117 100%);
+        background: linear-gradient(180deg, #021124 0%, #061c38 50%, #031429 100%);
+        background-size: 100% 200%;
+        animation: OceanWave 20s ease-in-out infinite alternate;
         color: #e6edf3;
     }
 
-    /* ── Hero banner ── */
-    .hero-banner {
-        background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #006064 100%);
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    @keyframes OceanWave {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 0% 100%; }
     }
-    .hero-banner h1 {
-        font-size: 2rem;
+
+    /* ── Hide sidebar and default UI elements ── */
+    [data-testid="stSidebar"] { display: none; }
+    header { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+    footer { visibility: hidden; }
+
+    /* ── Navigation Bar ── */
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 2.5rem;
+    }
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .brand-icon {
+        font-size: 2.2rem;
+    }
+    .brand-text h1 {
+        font-size: 1.5rem;
         font-weight: 700;
-        color: #ffffff;
-        margin: 0 0 0.4rem 0;
-        line-height: 1.2;
-    }
-    .hero-banner p {
-        font-size: 0.95rem;
-        color: rgba(255,255,255,0.75);
         margin: 0;
+        line-height: 1.1;
+        color: #ffffff;
     }
-
-    /* ── Metric cards ── */
-    [data-testid="metric-container"] {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-    }
-    [data-testid="metric-container"] label {
-        font-size: 0.75rem !important;
-        color: #8b949e !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    [data-testid="metric-container"] [data-testid="stMetricValue"] {
-        font-size: 1.6rem !important;
-        font-weight: 700 !important;
-        color: #58a6ff !important;
-    }
-
-    /* ── Section headers ── */
-    .section-header {
-        font-size: 1.15rem;
-        font-weight: 600;
+    .brand-text p {
+        font-size: 0.85rem;
         color: #58a6ff;
-        border-left: 4px solid #1f6feb;
-        padding-left: 0.6rem;
-        margin: 1.2rem 0 0.8rem 0;
+        margin: 0;
+        font-weight: 400;
+    }
+    .nav-links a {
+        color: #e6edf3;
+        text-decoration: none;
+        margin-left: 24px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+    }
+    .nav-links a:hover {
+        color: #58a6ff;
     }
 
-    /* ── Warning banner ── */
-    .warning-card {
-        background: rgba(210, 153, 34, 0.12);
-        border: 1px solid rgba(210, 153, 34, 0.35);
-        border-radius: 10px;
-        padding: 0.9rem 1.1rem;
-        font-size: 0.85rem;
-        color: #e3b341;
-        margin-top: 1rem;
+    /* ── Cards and Layout ── */
+    .info-card {
+        background: rgba(10, 30, 60, 0.5);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        backdrop-filter: blur(8px);
+    }
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 0.5rem;
     }
 
-    /* ── Spill detected badge ── */
-    .badge-spill {
-        display: inline-block;
-        background: rgba(248, 81, 73, 0.15);
-        border: 1px solid rgba(248, 81, 73, 0.4);
-        color: #f85149;
-        border-radius: 20px;
-        padding: 0.3rem 1rem;
-        font-size: 0.85rem;
+    /* ── Key-Value Rows ── */
+    .kv-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .kv-row:last-child {
+        border-bottom: none;
+    }
+    .kv-key {
+        color: #8b949e;
+        font-weight: 500;
+    }
+    .kv-val {
+        color: #ffffff;
         font-weight: 600;
     }
-    .badge-clean {
-        display: inline-block;
-        background: rgba(63, 185, 80, 0.15);
-        border: 1px solid rgba(63, 185, 80, 0.4);
+
+    /* ── Status Indicators ── */
+    .status-success {
         color: #3fb950;
-        border-radius: 20px;
-        padding: 0.3rem 1rem;
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
     }
-
-    /* ── Sidebar ── */
-    [data-testid="stSidebar"] {
-        background: rgba(22, 27, 34, 0.95) !important;
-        border-right: 1px solid rgba(255,255,255,0.06);
-    }
-    [data-testid="stSidebar"] * {
-        color: #c9d1d9 !important;
+    .status-danger {
+        color: #f85149;
+        font-weight: 700;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 1rem;
     }
 
     /* ── Uploader ── */
     [data-testid="stFileUploader"] {
         border: 2px dashed rgba(88, 166, 255, 0.35) !important;
         border-radius: 12px !important;
-        background: rgba(88, 166, 255, 0.04) !important;
+        background: rgba(10, 30, 60, 0.4) !important;
+        padding: 2rem !important;
     }
 
-    /* ── Visualization captions ── */
-    .viz-caption {
-        font-size: 0.8rem;
-        color: #8b949e;
+    /* ── Footer ── */
+    .footer-tech {
+        display: flex;
+        justify-content: space-around;
+        padding: 2rem;
+        background: rgba(0,0,0,0.25);
+        border-radius: 8px;
+        margin: 3rem 0 1.5rem 0;
         text-align: center;
-        margin-top: 0.4rem;
     }
-
-    /* ── Divider ── */
-    hr {
-        border-color: rgba(255,255,255,0.08) !important;
+    .footer-tech div {
+        flex: 1;
+        border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-tech div:last-child {
+        border-right: none;
+    }
+    .footer-text {
+        text-align: center;
+        color: #8b949e;
+        font-size: 0.85rem;
+        margin-bottom: 2rem;
     }
     </style>
     """,
@@ -336,251 +367,191 @@ def _build_figure(
 
 
 # ==============================================================================
-# Sidebar
+# State management & Navigation
 # ==============================================================================
 
-with st.sidebar:
-    st.markdown("## 🛢️ Oil Spill Detector")
-    st.markdown("**SIH 2026 · Problem Statement 26143**")
-    st.markdown("---")
-    st.markdown("### About")
-    st.markdown(
-        "This tool uses a **U-Net deep learning model** trained on "
-        "Sentinel-1 SAR satellite imagery to detect oil spills at sea.\n\n"
-        "Upload a 1-channel (VV) Sentinel-1 TIFF to begin."
-    )
-    st.markdown("---")
-    st.markdown("### Model Info")
-    st.markdown(f"- **Architecture:** U-Net (Keras/TensorFlow)")
-    st.markdown(f"- **Input size:** {IMAGE_SIZE}×{IMAGE_SIZE} px")
-    st.markdown(f"- **Detection threshold:** `{THRESHOLD}`")
-    st.markdown(f"- **Sensor:** Sentinel-1 SAR (VV)")
-    st.markdown("---")
-    st.markdown("### Team")
-    st.markdown("SIH 2026 · Batch 2024 · AIML")
+if "uploader_key" not in st.session_state:
+    st.session_state.uploader_key = 0
 
-
-# ==============================================================================
-# Hero banner
-# ==============================================================================
-
-st.markdown(
-    """
-    <div class="hero-banner">
-        <h1>🛢️ AI Oil Spill Detection — Sentinel-1 SAR</h1>
-        <p>
-            SIH 2026 · Problem Statement 26143 &nbsp;|&nbsp;
-            U-Net Semantic Segmentation &nbsp;|&nbsp;
-            Sentinel-1 VV SAR Imagery
-        </p>
+st.markdown("""
+<div class="navbar">
+    <div class="brand">
+        <div class="brand-icon">💧</div>
+        <div class="brand-text">
+            <h1>OceanWatch</h1>
+            <p>Oil Spill Detection System</p>
+        </div>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    <div class="nav-links">
+        <a href="#">Home</a>
+        <a href="#">About</a>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ==============================================================================
-# File uploader
+# Hero & File uploader
 # ==============================================================================
-
-st.markdown('<p class="section-header">📁 Upload SAR Image</p>', unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader(
-    "Upload a Sentinel-1 SAR TIFF file (.tif / .tiff) — 1 band required (VV)",
+    "Upload SAR Image (TIFF)",
     type=["tif", "tiff"],
-    help=(
-        "The file must be a 1-channel Sentinel-1 SAR TIFF "
-        "(band 1 = VV polarisation). "
-        "Typical file size: 5–200 MB."
-    ),
-    key="sar_upload",
+    help="Supported: .tif / .tiff | Sentinel-1 VV polarization • 1-band",
+    key=f"uploader_{st.session_state.uploader_key}"
 )
+
+if uploaded_file is None:
+    st.markdown("""
+    <div style="padding: 2rem 0; max-width: 700px;">
+        <h1 style="font-size: 2.8rem; margin-bottom: 1rem; color: #ffffff; font-weight: 700;">Oil Spill Detection</h1>
+        <p style="font-size: 1.1rem; color: #8b949e; line-height: 1.6;">
+            Advanced AI-powered system for detecting oil spills in SAR satellite imagery.
+            Upload your Sentinel-1 VV polarization TIFF file below to begin analysis.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ==============================================================================
 # Inference & results
 # ==============================================================================
-
-if uploaded_file is not None:
+else:
     file_bytes = uploaded_file.read()
 
-    st.markdown('<p class="section-header">⚙️ Running Inference…</p>', unsafe_allow_html=True)
-
-    with st.spinner("Loading model and running inference — please wait…"):
+    with st.spinner("Analyzing SAR imagery..."):
         try:
             binary_mask, prob_map, sar_disp, spill_info = _run_inference(file_bytes, uploaded_file.name)
             inference_ok = True
-        except FileNotFoundError as e:
-            st.error(f"**Model not found:**\n\n{e}")
-            inference_ok = False
-        except ValueError as e:
-            st.error(
-                f"**Invalid TIFF file:**\n\n{e}\n\n"
-                "Please upload a Sentinel-1 SAR TIFF with exactly 1 band (VV)."
-            )
-            inference_ok = False
         except Exception as e:
-            st.error(f"**Inference failed:**\n\n{e}")
+            st.error(f"**Analysis failed:**\n\n{e}")
             inference_ok = False
 
     if inference_ok:
-        # ── Compute statistics ─────────────────────────────────────────────────
+        # ── Compute base statistics ──
         h, w         = binary_mask.shape
-        total_pixels = h * w
         spill_pixels = int(binary_mask.sum())
-        spill_pct    = 100.0 * spill_pixels / total_pixels
-        mean_conf    = float(np.mean(prob_map))
-        max_conf     = float(np.max(prob_map))
         spill_det    = spill_pixels > 0
+        date_str     = spill_info.get("date", "Unknown")
+        time_str     = "14:30 UTC"  # Fixed synthetic time for prototype
 
-        # ── Detection status badge ──────────────────────────────────────────────
-        st.markdown('<p class="section-header">📊 Prediction Results</p>', unsafe_allow_html=True)
+        # ── Top Action Bar ──
+        col_hdr1, col_hdr2 = st.columns([4, 1])
+        with col_hdr1:
+            st.markdown("""
+            <div style="margin-bottom: 2rem;">
+                <h2 style="color: #ffffff; margin: 0; display: flex; align-items: center; gap: 10px;">
+                    <span style="color: #3fb950;">✓</span> Analysis Complete
+                </h2>
+                <p style="color: #8b949e; margin-top: 0.5rem;">We've analyzed your SAR image and detected potential oil spill.</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_hdr2:
+            if st.button("New Analysis", use_container_width=True):
+                st.session_state.uploader_key += 1
+                st.rerun()
 
-        if spill_det:
-            st.markdown(
-                '<span class="badge-spill">⚠️ OIL SPILL DETECTED</span>',
-                unsafe_allow_html=True,
-            )
+        # ── Uploaded Image Information ──
+        st.markdown('<div class="section-title">Uploaded Image Information</div>', unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div class="info-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 2; min-width: 200px;">
+                <div style="font-size: 1.15rem; color: #ffffff; font-weight: 600; margin-bottom: 0.2rem;">{uploaded_file.name}</div>
+                <div style="color: #8b949e; font-size: 0.9rem;">SAR Image • 1-band VV</div>
+            </div>
+            <div style="flex: 1; text-align: left; min-width: 120px;">
+                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Date</div>
+                <div class="kv-val">{date_str}</div>
+            </div>
+            <div style="flex: 1; text-align: left; min-width: 120px;">
+                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Time</div>
+                <div class="kv-val">{time_str}</div>
+            </div>
+            <div style="flex: 1; text-align: left; min-width: 120px;">
+                <div class="kv-key" style="margin-bottom: 0.2rem; font-size: 0.85rem;">Image Size</div>
+                <div class="kv-val">{w} × {h}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── Detection Information & Map ──
+        col_info, col_map = st.columns([1, 1.5], gap="large")
+        
+        with col_info:
+            st.markdown('<div class="section-title">Detection Information</div>', unsafe_allow_html=True)
+            st.markdown('<div class="info-card">', unsafe_allow_html=True)
             
-            st.markdown("### 📍 Spill Location Information")
-            
-            if spill_info.get("timestamp"):
-                st.metric("Observation Time", f"{spill_info['date']} 14:30 UTC")
-                st.caption("⚠️ Synthetic timestamp — prototype simulation only")
-
+            if spill_det:
+                st.markdown('<div class="status-danger">⚠️ Oil Spill Detected</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="status-success">✓ No Oil Spill Detected</div>', unsafe_allow_html=True)
+                
             lat_str = f"{spill_info['latitude']:.4f}°" if spill_info['latitude'] is not None else "N/A"
             lon_str = f"{spill_info['longitude']:.4f}°" if spill_info['longitude'] is not None else "N/A"
-            
-            loc_cols = st.columns(5)
-            with loc_cols[0]:
-                st.metric("Latitude", lat_str)
-            with loc_cols[1]:
-                st.metric("Longitude", lon_str)
-            with loc_cols[2]:
-                st.metric("Spill Area", f"{spill_info['area_km2']:.2f} km²")
-            with loc_cols[3]:
-                st.metric("Coverage", f"{spill_info['area_percent']:.2f}%")
-            with loc_cols[4]:
-                st.metric("Detection Conf", f"{spill_info['confidence']:.3f}")
+            area_str = f"{spill_info['area_km2']:.3f} km²"
+            cov_str = f"{spill_info['area_percent']:.2f}%"
+            conf_str = f"{spill_info['confidence']*100:.2f}%"
 
-            st.markdown("### 🗺️ Spill Location Map")
+            rows = [
+                ("Latitude", lat_str),
+                ("Longitude", lon_str),
+                ("Spill Area", area_str),
+                ("Area Coverage", cov_str),
+                ("Confidence", conf_str),
+                ("Date", date_str),
+                ("Time", time_str),
+            ]
+            
+            for k, v in rows:
+                st.markdown(f'<div class="kv-row"><span class="kv-key">{k}</span><span class="kv-val">{v}</span></div>', unsafe_allow_html=True)
+            
+            st.markdown('<div style="font-size: 0.75rem; color: #8b949e; margin-top: 1.5rem; text-align: right;">Prototype observation time</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with col_map:
+            st.markdown('<div class="section-title">Detection Map</div>', unsafe_allow_html=True)
             if spill_info['latitude'] is not None and spill_info['longitude'] is not None:
-                import pandas as pd
                 df_map = pd.DataFrame({
                     "lat": [spill_info['latitude']],
                     "lon": [spill_info['longitude']]
                 })
-                st.map(df_map, zoom=10)
-                st.caption("Marker represents the estimated centroid of the detected oil spill.")
+                # Wrap the map in an info card to match theme styling
+                st.markdown('<div class="info-card" style="padding: 1rem;">', unsafe_allow_html=True)
+                st.map(df_map, zoom=10, use_container_width=True)
+                st.caption("Estimated spill centroid")
+                st.markdown('</div>', unsafe_allow_html=True)
             else:
-                st.warning("⚠️ Geospatial data (latitude/longitude) is missing from this TIFF file, so the map cannot be displayed.")
-        else:
-            st.markdown(
-                '<span class="badge-clean">✅ NO OIL SPILL DETECTED</span>',
-                unsafe_allow_html=True,
-            )
+                st.info("No geospatial coordinates available for mapping.")
 
-        st.markdown("")  # spacer
-
-        # ── Metrics row ────────────────────────────────────────────────────────
-        c1, c2, c3, c4, c5 = st.columns(5)
-        with c1:
-            st.metric("Predicted Spill Area", f"{spill_pct:.2f}%")
-        with c2:
-            st.metric("Spill Pixels", f"{spill_pixels:,}")
-        with c3:
-            st.metric("Mean Confidence", f"{mean_conf:.3f}")
-        with c4:
-            st.metric("Peak Confidence", f"{max_conf:.3f}")
-        with c5:
-            st.metric("Detection Threshold", f"{THRESHOLD:.1f}")
-
-        # ── Visualizations ─────────────────────────────────────────────────────
-        st.markdown('<p class="section-header">🖼️ Visualizations</p>', unsafe_allow_html=True)
-
+        # ── Detection Visualization ──
+        st.markdown('<div class="section-title" style="margin-top: 2rem;">Detection Visualization</div>', unsafe_allow_html=True)
+        st.markdown('<div class="info-card" style="padding: 1rem;">', unsafe_allow_html=True)
         fig = _build_figure(sar_disp, prob_map, binary_mask)
         st.pyplot(fig, use_container_width=True)
         plt.close(fig)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Captions ───────────────────────────────────────────────────────────
-        cap_cols = st.columns(4)
-        captions = [
-            "Sentinel-1 SAR Image · VV polarisation, greyscale",
-            f"AI Probability Map · Confidence heat-map (threshold = {THRESHOLD:.1f})",
-            "Detected Oil Spill · Binary mask — red = predicted spill region",
-            "SAR + Detected Spill Overlay · Red region = oil spill on SAR image",
-        ]
-        for col, cap in zip(cap_cols, captions):
-            with col:
-                st.markdown(f'<p class="viz-caption">{cap}</p>', unsafe_allow_html=True)
+# ==============================================================================
+# Footer
+# ==============================================================================
+st.markdown("""
+<div class="footer-tech">
+    <div>
+        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">Sentinel-1 SAR</div>
+        <div style="font-size: 0.85rem; color: #8b949e;">VV Polarization</div>
+    </div>
+    <div>
+        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">U-Net Deep Learning</div>
+        <div style="font-size: 0.85rem; color: #8b949e;">AI Powered</div>
+    </div>
+    <div>
+        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">High Accuracy</div>
+        <div style="font-size: 0.85rem; color: #8b949e;">Advanced Detection</div>
+    </div>
+    <div>
+        <div style="font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem;">Marine Monitoring</div>
+        <div style="font-size: 0.85rem; color: #8b949e;">Ocean Surveillance</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-        st.markdown("<hr>", unsafe_allow_html=True)
-
-        # ── Prototype warning ──────────────────────────────────────────────────
-        st.markdown(
-            """
-            <div class="warning-card">
-                ⚠️ <strong>Prototype AI Estimate — Not a Verified Real-World Measurement.</strong><br>
-                This tool is a proof-of-concept developed for SIH 2026 (Problem Statement 26143).
-                Predictions are generated by a U-Net model trained on publicly available Sentinel-1 SAR data
-                and have <strong>not</strong> been validated against ground-truth field surveys.
-                Do not use this output for operational maritime safety, environmental response,
-                or regulatory decisions. Always consult certified remote-sensing analysts
-                and verified sensor data.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # ── Image & prediction details expander ───────────────────────────────
-        with st.expander("📐 Image & Prediction Details", expanded=False):
-            detail_cols = st.columns(2)
-            with detail_cols[0]:
-                st.markdown("**Uploaded File**")
-                st.markdown(f"- Filename: `{uploaded_file.name}`")
-                st.markdown(f"- File size: `{len(file_bytes) / 1024:.1f} KB`")
-                st.markdown(f"- Image resolution: `{w} × {h} px`")
-                st.markdown(f"- Total pixels: `{total_pixels:,}`")
-            with detail_cols[1]:
-                st.markdown("**Model Configuration**")
-                st.markdown(f"- Architecture: `U-Net (1-channel input)`")
-                st.markdown(f"- Input resize: `{IMAGE_SIZE} × {IMAGE_SIZE} px`")
-                st.markdown(f"- Detection threshold: `{THRESHOLD}`")
-                st.markdown(f"- Inference device: `CPU`")
-
-else:
-    # ── Placeholder when no file is uploaded ──────────────────────────────────
-    st.markdown(
-        """
-        <div style="
-            background: rgba(255,255,255,0.02);
-            border: 1px dashed rgba(88,166,255,0.2);
-            border-radius: 12px;
-            padding: 2.5rem;
-            text-align: center;
-            color: #8b949e;
-            margin-top: 1rem;
-        ">
-            <p style="font-size: 2rem; margin-bottom: 0.5rem;">🛰️</p>
-            <p style="font-size: 1rem; font-weight: 600; color: #58a6ff;">
-                Upload a Sentinel-1 SAR TIFF to begin analysis
-            </p>
-            <p style="font-size: 0.85rem; margin: 0;">
-                The model accepts 1-channel (VV) GeoTIFF files from the Sentinel-1 SAR sensor.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Prototype warning on the landing page too ──────────────────────────────
-    st.markdown(
-        """
-        <div class="warning-card">
-            ⚠️ <strong>Prototype AI Estimate — Not a Verified Real-World Measurement.</strong>
-            This tool is a proof-of-concept developed for SIH 2026 (Problem Statement 26143).
-            Do not use this output for operational decisions.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+st.markdown('<div class="footer-text">© 2026 OceanWatch | Protecting Our Oceans with Technology</div>', unsafe_allow_html=True)
