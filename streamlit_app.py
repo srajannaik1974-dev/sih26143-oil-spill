@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from datetime import datetime, timezone
 
 import numpy as np
@@ -251,7 +251,7 @@ def _make_thumb(img_data, cmap="gray", vmin=0, vmax=1) -> plt.Figure:
 
 
 # ==============================================================================
-# Map helper: build full Folium map with spill + origin + trajectory
+# Map helper: build full Folium map with spill + origin + trajectory + AIS
 # ==============================================================================
 
 def _build_drift_map(
@@ -265,6 +265,7 @@ def _build_drift_map(
     spill_conf: float,
     rel_time_str: str,
     n_pts: int,
+    candidate_vessels: Optional[List[Dict[str, Any]]] = None,
 ) -> folium.Map:
     """
     Build an interactive Folium map showing:
@@ -272,11 +273,19 @@ def _build_drift_map(
       - Green circle marker + label at estimated origin
       - Dashed blue polyline for the backward trajectory
       - Subtle white dashed uncertainty circle around the estimated origin (20 km radius)
+      - Blue circle markers + labels for candidate vessels within range (dynamic simulation updates)
       - Automatic fit_bounds to show all points
       - Street / Satellite / Ocean tile layer selector
     """
     all_lats = [spill_lat, origin_lat] + [pt.latitude  for pt in traj_pts]
     all_lons = [spill_lon, origin_lon] + [pt.longitude for pt in traj_pts]
+
+    # Include candidate vessels in boundary calculations
+    if candidate_vessels:
+        for cand in candidate_vessels:
+            all_lats.append(cand["latitude"])
+            all_lons.append(cand["longitude"])
+
     center_lat = (min(all_lats) + max(all_lats)) / 2.0
     center_lon = (min(all_lons) + max(all_lons)) / 2.0
 
@@ -325,7 +334,6 @@ def _build_drift_map(
         for i in range(0, len(traj_pts), step):
             pt = traj_pts[i]
             elapsed_min = i * 30
-            # Small green-cyan circle markers along trajectory path
             folium.CircleMarker(
                 location=[pt.latitude, pt.longitude],
                 radius=4,
@@ -377,7 +385,6 @@ def _build_drift_map(
         popup=folium.Popup(spill_popup_html, max_width=260),
     ).add_to(m)
     
-    # Text label for spill
     folium.Marker(
         location=[spill_lat, spill_lon],
         icon=folium.DivIcon(
@@ -421,7 +428,6 @@ def _build_drift_map(
         popup=folium.Popup(origin_popup_html, max_width=260),
     ).add_to(m)
     
-    # Text label for origin
     folium.Marker(
         location=[origin_lat, origin_lon],
         icon=folium.DivIcon(
@@ -436,6 +442,64 @@ def _build_drift_map(
         ),
     ).add_to(m)
 
+    # Candidate vessels markers (BLUE)
+    if candidate_vessels:
+        for cand in candidate_vessels:
+            cand_lat = cand["latitude"]
+            cand_lon = cand["longitude"]
+            mmsi = cand["mmsi"]
+            vessel_name = cand.get("vessel_name") or "Unknown"
+            vessel_type = cand.get("vessel_type") or "Unknown"
+            min_dist = cand.get("minimum_distance_km", 0.0)
+            time_diff = cand.get("time_difference_minutes", 0.0)
+            score = cand.get("candidate_score", 0.0)
+            closest_time = cand.get("closest_record_time", "")
+
+            popup_html = (
+                f'<div style="font-family:Inter,sans-serif;min-width:210px;padding:4px">'
+                f'<div style="font-weight:700;font-size:13px;color:#2563eb;margin-bottom:6px">&#128674; Candidate Vessel</div>'
+                f'<table style="width:100%;font-size:11px;border-collapse:collapse">'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">MMSI</td><td style="font-weight:600">{mmsi}</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Name</td><td style="font-weight:600">{vessel_name}</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Type</td><td style="font-weight:600">{vessel_type}</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Current Lat</td><td style="font-weight:600">{cand_lat:.6f}&deg; N</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Current Lon</td><td style="font-weight:600">{cand_lon:.6f}&deg; E</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Min Distance</td><td style="font-weight:600">{min_dist:.2f} km</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Observation Time</td><td style="font-weight:600">{closest_time}</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Time Difference</td><td style="font-weight:600">{time_diff:.1f} min</td></tr>'
+                f'<tr><td style="color:#6b7280;padding:2px 6px 2px 0">Attribution Score</td><td style="font-weight:700;color:#2563eb">{score:.1f}/100</td></tr>'
+                f'</table></div>'
+            )
+
+            # Blue circle marker for the candidate
+            folium.CircleMarker(
+                location=[cand_lat, cand_lon],
+                radius=10,
+                color="#2563eb",
+                weight=2.5,
+                fill=True,
+                fill_color="#2563eb",
+                fill_opacity=0.35,
+                tooltip=f"Candidate Vessel: {vessel_name} (MMSI: {mmsi})",
+                popup=folium.Popup(popup_html, max_width=280),
+            ).add_to(m)
+
+            # DIV label text
+            label_text = vessel_name if vessel_name != "Unknown" else f"MMSI {mmsi}"
+            folium.Marker(
+                location=[cand_lat, cand_lon],
+                icon=folium.DivIcon(
+                    html=(
+                        f'<div style="background:rgba(37,99,235,0.95);color:#fff;font-size:9px;font-weight:700;'
+                        f'padding:3px 6px;border-radius:4px;white-space:nowrap;'
+                        f'box-shadow:0 2px 6px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.25);'
+                        f'font-family:Inter,sans-serif;margin-top:-16px;margin-left:14px">'
+                        f'CANDIDATE: {label_text}</div>'
+                    ),
+                    icon_anchor=(0, 0),
+                ),
+            ).add_to(m)
+
     # Custom Floating Legend
     legend_html = (
         '<div style="position:fixed;top:20px;right:20px;z-index:999;'
@@ -448,6 +512,9 @@ def _build_drift_map(
         '<div style="margin-bottom:6px;display:flex;align-items:center;gap:6px">'
         '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444"></span>'
         '<span>Detected Spill (Satellite)</span></div>'
+        '<div style="margin-bottom:6px;display:flex;align-items:center;gap:6px">'
+        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb"></span>'
+        '<span>AIS Candidate Vessel</span></div>'
         '<div style="margin-bottom:6px;display:flex;align-items:center;gap:6px">'
         '<span style="display:inline-block;width:12px;height:2px;background:#3b82f6"></span>'
         '<span>Backtracked Trajectory</span></div>'
@@ -523,6 +590,12 @@ def _build_trajectory_chart(traj_pts: list, spill_lat: float, spill_lon: float, 
 
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
+
+if "sim_active" not in st.session_state:
+    st.session_state.sim_active = True  # Enable simulation automatically by default!
+
+if "sim_step" not in st.session_state:
+    st.session_state.sim_step = 0
 
 # ==============================================================================
 # NAVBAR
@@ -633,12 +706,60 @@ if uploaded_file is not None:
             except Exception as _de:
                 drift_err = str(_de)
 
+        # Run Member 3 AIS analysis safely (origin + release_time -> AIS search)
+        ais_result = None
+        ais_ok     = False
+        ais_err    = ""
+        if drift_ok and drift_result is not None:
+            try:
+                from ais_adapter import run_ais_analysis
+                ais_result = run_ais_analysis(
+                    probable_latitude=drift_result.probable_latitude,
+                    probable_longitude=drift_result.probable_longitude,
+                    estimated_release_time=drift_result.estimated_release_time,
+                    ais_csv_path=None,  # will default to sih_demo_ais.csv
+                    search_radius_km=20.0,
+                    time_window_minutes=60.0,
+                    top_n_candidates=5
+                )
+                ais_ok = True
+            except Exception as _ae:
+                ais_err = str(_ae)
+
+        # ---- DYNAMIC DRAFT VESSEL MOVEMENT ANIMATION LAYER ----
+        if ais_ok and ais_result and ais_result.get("candidate_vessels"):
+            sim_active = st.session_state.get("sim_active", True)
+            sim_step = st.session_state.get("sim_step", 0)
+
+            for cand in ais_result["candidate_vessels"]:
+                pts = cand.get("ais_records", [])
+                if len(pts) >= 1:
+                    start_pt = pts[0]
+                    # If single point exists, extrapolate destination based on speed/heading
+                    if len(pts) == 1:
+                        end_lat = start_pt["latitude"] + 0.012
+                        end_lon = start_pt["longitude"] - 0.004
+                    else:
+                        end_pt = pts[-1]
+                        end_lat = end_pt["latitude"]
+                        end_lon = end_pt["longitude"]
+                    
+                    start_lat = start_pt["latitude"]
+                    start_lon = start_pt["longitude"]
+
+                    # Interpolation fraction over 100 steps (much smoother and slower)
+                    t_frac = (sim_step % 100) / 100.0
+                    cand["latitude"] = start_lat + t_frac * (end_lat - start_lat)
+                    cand["longitude"] = start_lon + t_frac * (end_lon - start_lon)
+
         # Clear space for New Analysis button
         col_hdr_left, col_hdr_right = st.columns([5, 1])
         with col_hdr_right:
             st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
             if st.button("\u2190 New Analysis", use_container_width=True):
                 st.session_state.uploader_key += 1
+                if "sim_active" in st.session_state:
+                    st.session_state.sim_active = True
                 st.rerun()
 
         # ================================================================
@@ -746,6 +867,8 @@ if uploaded_file is not None:
                     unsafe_allow_html=True,
                 )
                 st.markdown('<div class="map-container">', unsafe_allow_html=True)
+                
+                # Render Map with spill, trajectory, search radius, and AIS vessels
                 fmap = _build_drift_map(
                     spill_lat=lat_val,
                     spill_lon=lon_val,
@@ -757,6 +880,7 @@ if uploaded_file is not None:
                     spill_conf=conf_val * 100.0,
                     rel_time_str=drift_result.estimated_release_time.strftime("%Y-%m-%d %H:%M UTC"),
                     n_pts=drift_result.trajectory_points_used,
+                    candidate_vessels=ais_result["candidate_vessels"] if (ais_ok and ais_result) else None
                 )
                 st_folium(fmap, width="100%", height=480, returned_objects=[])
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -848,6 +972,92 @@ if uploaded_file is not None:
                     )
                     st.pyplot(fig_chart, width="stretch")
                     plt.close(fig_chart)
+                    
+                    # ---- Member 3: AIS Vessel Analysis UI section ----
+                    if ais_ok and ais_result:
+                        st.markdown('<div class="drift-divider"></div>', unsafe_allow_html=True)
+                        
+                        # Live Movement simulation controls
+                        col_ow_title, col_ow_sim = st.columns([3, 1.5])
+                        with col_ow_title:
+                            st.markdown('<div class="ow-panel-title" style="color:#63b3ed; font-size:0.92rem; font-weight:700; margin-bottom:0.6rem; margin-top:0.4rem; border:none; padding:0;">🚢&nbsp; AIS VESSEL ANALYSIS</div>', unsafe_allow_html=True)
+                        with col_ow_sim:
+                            if st.session_state.get("sim_active", True):
+                                if st.button("■ Stop Simulation", key="btn_stop_sim", use_container_width=True):
+                                    st.session_state.sim_active = False
+                                    st.rerun()
+                            else:
+                                if st.button("▶ Start Live tracking", key="btn_start_sim", use_container_width=True):
+                                    st.session_state.sim_active = True
+                                    st.session_state.sim_step = 0
+                                    st.rerun()
+
+                        meta = ais_result.get("metadata", {})
+                        st.markdown(f"""
+                        <div style="font-size:0.75rem; color:#90a4b7; margin-bottom:0.9rem; display:flex; gap:1.5rem; flex-wrap:wrap; background:rgba(255,255,255,0.01); padding:6px 10px; border-radius:4px; border:1px solid rgba(99,179,237,0.05);">
+                           <span><strong>AIS Dataset:</strong> sih_demo_ais.csv (Synthetic)</span>
+                           <span><strong>Search Radius:</strong> 20.0 km</span>
+                           <span><strong>Time Window:</strong> &plusmn;60 min</span>
+                           <span><strong>Records Examined:</strong> {meta.get('records_loaded', 0)}</span>
+                           <span><strong>Candidates Found:</strong> {meta.get('unique_vessels_found', 0)}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        cands = ais_result.get("candidate_vessels", [])
+                        if cands:
+                            # Build Table rows dynamically
+                            table_rows = ""
+                            for idx, cand in enumerate(cands, 1):
+                                name_str = cand.get("vessel_name") or "Unknown"
+                                mmsi = cand["mmsi"]
+                                v_type = cand.get("vessel_type") or "Unknown"
+                                dist = cand["minimum_distance_km"]
+                                time_diff = cand["time_difference_minutes"]
+                                score = cand["candidate_score"]
+                                
+                                c_lat = cand["latitude"]
+                                c_lon = cand["longitude"]
+
+                                table_rows += f"""
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                   <td style="padding: 8px; font-weight:700; color:#63b3ed;">#{idx}</td>
+                                   <td style="padding: 8px;"><strong>{mmsi}</strong><br><span style="font-size:0.7rem; color:#90a4b7;">{name_str}</span></td>
+                                   <td style="padding: 8px;">{v_type}</td>
+                                   <td style="padding: 8px; font-family:monospace; color:#a0b8cc;">{c_lat:.6f}&deg; N</td>
+                                   <td style="padding: 8px; font-family:monospace; color:#a0b8cc;">{c_lon:.6f}&deg; E</td>
+                                   <td style="padding: 8px;">{dist:.2f} km</td>
+                                   <td style="padding: 8px;">{time_diff:.1f} min</td>
+                                   <td style="padding: 8px; text-align: right; color:#48bb78; font-weight:bold;">{score:.1f}/100</td>
+                                </tr>
+                                """
+
+                            table_html = f"""
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; color: #e2e8f0;">
+                              <thead>
+                                <tr style="border-bottom: 1px solid rgba(99, 179, 237, 0.15); color:#63b3ed; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.02em;">
+                                  <th style="padding: 6px 8px;">Rank</th>
+                                  <th style="padding: 6px 8px;">MMSI / Name</th>
+                                  <th style="padding: 6px 8px;">Type</th>
+                                  <th style="padding: 6px 8px;">Latitude</th>
+                                  <th style="padding: 6px 8px;">Longitude</th>
+                                  <th style="padding: 6px 8px;">Min Distance</th>
+                                  <th style="padding: 6px 8px;">Time Diff</th>
+                                  <th style="padding: 6px 8px; text-align: right;">Score</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                 {table_rows}
+                              </tbody>
+                            </table>
+                            """
+                            # Clean newlines and leading spaces so Markdown does not parse as a code block
+                            clean_table_html = table_html.replace("\n", "").replace("    ", "").replace("  ", "")
+                            st.markdown(clean_table_html, unsafe_allow_html=True)
+                        else:
+                            st.info("No candidate vessels found within thresholds.")
+                    elif ais_err:
+                        st.warning(f"⚠️ AIS Vessel Analysis unavailable: {ais_err[:80]}")
+
                 else:
                     st.info("Drift analysis details unavailable.")
 
@@ -941,3 +1151,10 @@ st.markdown("""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ---- Sim autorefresh loop ----
+if st.session_state.get("sim_active", True):
+    import time
+    st.session_state.sim_step = (st.session_state.get("sim_step", 0) + 1) % 100
+    time.sleep(0.3)
+    st.rerun()
