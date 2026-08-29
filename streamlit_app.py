@@ -250,6 +250,7 @@ def _run_inference(file_bytes: bytes, filename: str):
             tmp_path,
             binary_mask,
             prob_map,
+            original_filename=filename,
         )
 
         return binary_mask, prob_map, sar_disp, spill_info
@@ -440,6 +441,11 @@ if uploaded_file is not None:
             )
             
             st.markdown("### 📍 Spill Location Information")
+            
+            if spill_info.get("timestamp"):
+                st.metric("Observation Time", f"{spill_info['date']} 14:30 UTC")
+                st.caption("⚠️ Synthetic timestamp — prototype simulation only")
+
             lat_str = f"{spill_info['latitude']:.4f}°" if spill_info['latitude'] is not None else "N/A"
             lon_str = f"{spill_info['longitude']:.4f}°" if spill_info['longitude'] is not None else "N/A"
             

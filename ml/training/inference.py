@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import sys
 import warnings
+import re
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
@@ -236,12 +237,26 @@ class OilSpillPredictor:
         tiff_path: str | Path,
         binary_mask: np.ndarray,
         prob_map: np.ndarray,
+        original_filename: str = None,
     ) -> dict:
         """
         Calculate geographic location, area and confidence
         of the detected oil spill.
         """
         tiff_path = Path(tiff_path)
+
+        # Synthetic timestamp for SIH prototype only.
+        # Original Sentinel-1 acquisition time is unavailable
+        # in the processed TIFF dataset.
+        synthetic_date = None
+        synthetic_timestamp = None
+        
+        filename_to_parse = original_filename if original_filename else tiff_path.name
+        match = re.search(r'(\d{4})_?(\d{2})_?(\d{2})', filename_to_parse)
+        if match:
+            year, month, day = match.groups()
+            synthetic_date = f"{year}-{month}-{day}"
+            synthetic_timestamp = f"{synthetic_date}T14:30:00Z"
 
         with rasterio.open(str(tiff_path)) as src:
 
@@ -260,6 +275,9 @@ class OilSpillPredictor:
                     "area_km2": 0.0,
                     "area_percent": 0.0,
                     "confidence": 0.0,
+                    "date": synthetic_date,
+                    "timestamp": synthetic_timestamp,
+                    "timestamp_type": "synthetic",
                 }
 
             centroid_row = float(rows.mean())
@@ -300,6 +318,9 @@ class OilSpillPredictor:
                 "area_km2": float(area_km2),
                 "area_percent": float(area_percent),
                 "confidence": confidence,
+                "date": synthetic_date,
+                "timestamp": synthetic_timestamp,
+                "timestamp_type": "synthetic",
             }
 
     def visualise(
