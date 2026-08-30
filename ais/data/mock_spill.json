@@ -1,0 +1,12 @@
+{
+  "spill_id": "SPILL_2026_01",
+  "origin_lat": 12.8500,
+  "origin_lon": 74.7200,
+  "release_start": "2026-08-20T14:00:00Z",
+  "release_end": "2026-08-20T15:00:00Z",
+  "search_radius_km": 10.0,
+  "spill_latitude": 12.8500,
+  "spill_longitude": 74.7200,
+  "spill_timestamp": "2026-08-20T14:30:00Z",
+  "estimated_time": "2026-08-20T14:30:00Z"
+}

@@ -1,0 +1,7 @@
+# AIS Candidate Identification Module — Dependencies
+# Core module is standalone and runs on pure Python 3.8+ Standard Library.
+# No external runtime dependencies required.
+
+# Optional development & testing dependencies
+pytest>=7.0.0
+
