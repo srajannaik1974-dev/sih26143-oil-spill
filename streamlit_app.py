@@ -10,6 +10,7 @@ Run with:
 
 from __future__ import annotations
 
+import base64
 import warnings
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Any
@@ -48,104 +49,268 @@ st.set_page_config(
 # CSS
 # ==============================================================================
 
-st.markdown("""
+_OBG_PATH = Path(__file__).resolve().parent / "ocean_bg.jpg"
+try:
+    _OBG_B64 = base64.b64encode(_OBG_PATH.read_bytes()).decode()
+    _OBG_CSS = f"url('data:image/jpeg;base64,{_OBG_B64}')"
+except Exception:
+    _OBG_B64 = ""
+    _OBG_CSS = "linear-gradient(160deg,#020c1b 0%,#081e38 35%,#071530 65%,#020e20 100%)"
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family:'Inter',sans-serif; color:#e2e8f0; }
-.stApp {
-    background:linear-gradient(160deg,#020c1b 0%,#081e38 35%,#071530 65%,#020e20 100%);
-    background-size:100% 300%;
-    animation:oceanPulse 28s ease-in-out infinite alternate;
-}
-@keyframes oceanPulse {
-    0%   { background-position:50% 0%;   }
-    50%  { background-position:50% 55%;  }
-    100% { background-position:50% 100%; }
-}
-[data-testid="stSidebar"]  { display:none !important; }
-[data-testid="stHeader"]   { display:none !important; }
-header                     { visibility:hidden !important; }
-#MainMenu                  { visibility:hidden !important; }
-footer                     { visibility:hidden !important; }
-.stDeployButton            { display:none !important; }
-[data-testid="stToolbar"]  { display:none !important; }
-.block-container {
-    padding-top:0 !important; padding-left:2rem !important;
-    padding-right:2rem !important; max-width:1440px; margin:0 auto;
-}
-/* NAVBAR */
-.ow-navbar { display:flex; justify-content:space-between; align-items:center;
-    padding:1rem 0 0.85rem; border-bottom:1px solid rgba(99,179,237,0.14); margin-bottom:1rem; }
-.ow-brand  { display:flex; align-items:center; gap:12px; }
-.ow-brand-icon { font-size:2rem; line-height:1; }
-.ow-brand-text h1 { font-size:1.35rem; font-weight:700; margin:0; line-height:1.1; color:#fff; letter-spacing:0.02em; }
-.ow-brand-text p  { font-size:0.75rem; color:#63b3ed; margin:0; font-weight:400; letter-spacing:0.02em; }
-.ow-status-badges { display:flex; align-items:center; gap:8px; }
-.ow-status-badge { display:flex; align-items:center; gap:6px; font-size:0.7rem; font-weight:700;
-    padding:4px 10px; border-radius:4px; background:rgba(10,25,50,0.6); backdrop-filter:blur(4px); letter-spacing:0.03em; }
-.status-complete { border:1px solid rgba(72,187,120,0.5); color:#48bb78; }
-.status-model { border:1px solid rgba(99,179,237,0.4); color:#63b3ed; }
-.status-data { border:1px solid rgba(159,122,234,0.5); color:#b794f4; }
-.status-env { border:1px solid rgba(79,209,197,0.5); color:#4fd1c5; }
-.ow-nav-links { display:flex; align-items:center; gap:1.5rem; }
-.ow-nav-links a { color:#a0aec0; text-decoration:none; font-weight:500; font-size:0.85rem;
-    transition:color 0.2s; padding-bottom:2px; border-bottom:2px solid transparent; }
-.ow-nav-links a.active,.ow-nav-links a:hover { color:#63b3ed; border-bottom-color:#63b3ed; }
-/* HERO */
-.ow-hero { padding:2.5rem 0 1.5rem; }
-.ow-hero h2 { font-size:2.2rem; font-weight:700; color:#fff; margin:0 0 0.6rem; line-height:1.15; }
-.ow-hero p  { font-size:0.95rem; color:#90a4b7; max-width:520px; line-height:1.6; margin:0 0 2rem; }
-[data-testid="stFileUploader"] {
-    background:rgba(5,20,50,0.55) !important; border:1px dashed rgba(99,179,237,0.4) !important;
-    border-radius:10px !important; padding:1.5rem !important; max-width:540px !important;
-    backdrop-filter:blur(6px) !important;
-}
-/* PANELS */
-.ow-panel { background:rgba(7,20,46,0.75); border:1px solid rgba(99,179,237,0.13); border-radius:10px; padding:1.2rem; backdrop-filter:blur(8px); }
-.ow-panel-title { font-size:0.92rem; font-weight:700; color:#63b3ed; margin:0 0 0.9rem;
-    display:flex; align-items:center; gap:8px; padding-bottom:0.6rem; border-bottom:1px solid rgba(99,179,237,0.1); letter-spacing:0.03em; }
-/* BADGES */
-.ow-detected-badge { display:flex; align-items:center; gap:10px; padding:0.6rem 0.85rem; border-radius:7px; font-weight:700; font-size:0.9rem; margin-bottom:0.8rem; text-transform:uppercase; letter-spacing:0.02em; }
-.ow-detected-badge.spill    { background:rgba(72,187,120,0.08); border:1px solid rgba(72,187,120,0.3); color:#48bb78; }
-.ow-detected-badge.no-spill { background:rgba(99,179,237,0.08); border:1px solid rgba(99,179,237,0.25); color:#63b3ed; }
-.ow-detected-badge .badge-icon { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; flex-shrink:0; }
-.ow-detected-badge.spill    .badge-icon { background:rgba(72,187,120,0.15); border:1px solid rgba(72,187,120,0.4); }
-.ow-detected-badge.no-spill .badge-icon { background:rgba(99,179,237,0.2); border:1px solid rgba(99,179,237,0.5); }
-/* METRIC ROWS */
-.ow-metric-row { display:flex; justify-content:space-between; align-items:center;
+
+/* ── OVERRIDE STREAMLIT VARIABLES ── */
+:root {{
+    --text-color: #ffffff !important;
+    --secondary-text-color: #ffffff !important;
+    --font: 'Inter', sans-serif !important;
+    color-scheme: dark !important;
+}}
+
+/* ── OCEAN BACKGROUND WITH INTEGRATED OVERLAY ──────────────── */
+html, body {{
+    background: linear-gradient(rgba(2, 10, 24, 0.62), rgba(2, 10, 24, 0.62)), {_OBG_CSS} center center / cover no-repeat fixed !important;
+    background-color: #04111f !important;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif !important;
+}}
+
+/* ── GENERAL TEXT FORCE WHITE (base rules) ─────────────────── */
+html, body, .stApp, 
+.stApp p, .stApp span, .stApp label, .stApp li, .stApp td, .stApp th,
+.stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+.stMarkdown p, .stMarkdown span, .stMarkdown div,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] span {{
+    color: #ffffff !important;
+    font-family: 'Inter', sans-serif !important;
+}}
+
+/* ── DISABLE STREAMLIT RUNNING/RERUN FADE/BLUR ────────────── */
+.stApp, .stApp *,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] *,
+[data-testid="stMain"], [data-testid="stMain"] *,
+.element-container, .element-container *,
+[data-testid="stVerticalBlock"] > div,
+[data-st-mode="running"] *,
+[data-baseweb="tab-panel"] {{
+    opacity: 1 !important;
+    transition: none !important;
+    filter: none !important;
+}}
+
+/* ── ALL STREAMLIT WRAPPERS: transparent ──────────────────── */
+.stApp, .stApp > div, .stApp > div > div,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] > section,
+[data-testid="stMain"], [data-testid="stMain"] > div,
+.main, .block-container,
+.stVerticalBlock,
+[data-testid="stVerticalBlock"],
+[data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="column"] {{
+    background: transparent !important;
+    background-color: transparent !important;
+}}
+
+/* ── HIDE STREAMLIT CHROME ────────────────────────────────── */
+[data-testid="stSidebar"], [data-testid="stHeader"],
+header, #MainMenu, footer, .stDeployButton,
+[data-testid="stToolbar"] {{ display: none !important; visibility: hidden !important; }}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.block-container {{
+    padding-top: 0 !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1440px;
+    margin: 0 auto;
+}}
+
+/* ── NAVBAR ───────────────────────────────────────────────── */
+.ow-navbar {{ display:flex; justify-content:space-between; align-items:center;
+    padding:1rem 0 0.85rem; border-bottom:1px solid rgba(99,179,237,0.14); margin-bottom:1rem; }}
+.ow-brand  {{ display:flex; align-items:center; gap:12px; }}
+.ow-brand-icon {{ font-size:2rem; line-height:1; }}
+.ow-brand-text h1 {{ font-size:1.35rem; font-weight:700; margin:0; line-height:1.1;
+    color:#ffffff !important; letter-spacing:0.02em; }}
+.ow-brand-text p  {{ font-size:0.75rem; color:#63b3ed !important; margin:0;
+    font-weight:400; letter-spacing:0.02em; }}
+.ow-status-badges {{ display:flex; align-items:center; gap:8px; }}
+.ow-status-badge  {{ display:flex; align-items:center; gap:6px; font-size:0.7rem; font-weight:700;
+    padding:4px 10px; border-radius:4px; background:rgba(6,18,44,0.85);
+    backdrop-filter:blur(6px); letter-spacing:0.03em; }}
+.status-complete {{ border:1px solid rgba(72,187,120,0.5);  color:#48bb78 !important; }}
+.status-model    {{ border:1px solid rgba(99,179,237,0.4);  color:#63b3ed !important; }}
+.status-data     {{ border:1px solid rgba(159,122,234,0.5); color:#b794f4 !important; }}
+.status-env      {{ border:1px solid rgba(79,209,197,0.5);  color:#4fd1c5 !important; }}
+.ow-nav-links {{ display:flex; align-items:center; gap:1.5rem; }}
+.ow-nav-links a {{ color:#a0aec0 !important; text-decoration:none; font-weight:500;
+    font-size:0.85rem; transition:color 0.2s; padding-bottom:2px;
+    border-bottom:2px solid transparent; }}
+.ow-nav-links a.active, .ow-nav-links a:hover {{ color:#63b3ed !important; border-bottom-color:#63b3ed; }}
+
+/* ── HERO ─────────────────────────────────────────────────── */
+.ow-hero {{ padding:2.5rem 0 1.5rem; }}
+.ow-hero h2 {{ font-size:2.2rem; font-weight:700; color:#ffffff !important;
+    margin:0 0 0.6rem; line-height:1.15; text-shadow:0 2px 16px rgba(0,0,0,0.8); }}
+.ow-hero p  {{ font-size:0.95rem; color:#b0cce0 !important;
+    max-width:520px; line-height:1.6; margin:0 0 2rem; }}
+
+/* ── UPLOAD ZONE ──────────────────────────────────────────── */
+[data-testid="stFileUploader"] {{
+    background: rgba(4, 18, 50, 0.88) !important;
+    border: 2px solid rgba(99,179,237,0.65) !important;
+    border-radius: 14px !important;
+    padding: 1.6rem !important;
+    max-width: 600px !important;
+    backdrop-filter: blur(14px) !important;
+    box-shadow: 0 0 28px rgba(99,179,237,0.22), 0 0 70px rgba(37,99,235,0.10) !important;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease !important;
+}}
+[data-testid="stFileUploader"]:hover {{
+    box-shadow: 0 0 40px rgba(99,179,237,0.40), 0 0 90px rgba(37,99,235,0.18) !important;
+    border-color: rgba(147,197,253,0.9) !important;
+}}
+[data-testid="stFileUploader"] label,
+[data-testid="stFileUploader"] label * {{
+    color: #93c5fd !important; font-weight:700 !important; font-size:1.05rem !important;
+}}
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploaderDropzone"] * {{ color:#93c5fd !important; }}
+[data-testid="stFileUploaderDropzone"] {{
+    background: rgba(20,45,110,0.35) !important;
+    border: 1.5px dashed rgba(147,197,253,0.55) !important;
+    border-radius: 10px !important;
+}}
+[data-testid="stFileUploaderFileName"] {{ color:#7dd3fc !important; font-weight:600 !important; }}
+[data-testid="stFileUploaderFile"]  *  {{ color:#dde4f0 !important; }}
+small {{ color:#94a3b8 !important; }}
+
+/* ── PANELS ───────────────────────────────────────────────── */
+.ow-panel {{
+    background: rgba(3, 12, 30, 0.90) !important;
+    border: 1px solid rgba(99,179,237,0.22) !important;
+    border-radius: 12px !important;
+    padding: 1.2rem !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+}}
+.ow-panel-title {{
+    color: #63b3ed !important; font-size:0.92rem !important; font-weight:700 !important;
+    letter-spacing:0.04em !important; padding-bottom:0.6rem !important;
+    border-bottom:1px solid rgba(99,179,237,0.12) !important; margin-bottom:0.9rem !important;
+    display:flex; align-items:center; gap:8px;
+}}
+
+/* ── BADGES ───────────────────────────────────────────────── */
+.ow-detected-badge {{ display:flex; align-items:center; gap:10px; padding:0.6rem 0.85rem;
+    border-radius:7px; font-weight:700; font-size:0.9rem; margin-bottom:0.8rem;
+    text-transform:uppercase; letter-spacing:0.02em; }}
+.ow-detected-badge.spill    {{ background:rgba(34,100,60,0.30); border:1px solid rgba(72,187,120,0.4);  color:#4ade80 !important; }}
+.ow-detected-badge.no-spill {{ background:rgba(20,50,100,0.30); border:1px solid rgba(99,179,237,0.35); color:#7dd3fc !important; }}
+.ow-detected-badge .badge-icon {{ width:18px; height:18px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:0.75rem; flex-shrink:0; }}
+.ow-detected-badge.spill    .badge-icon {{ background:rgba(72,187,120,0.15); border:1px solid rgba(72,187,120,0.4); }}
+.ow-detected-badge.no-spill .badge-icon {{ background:rgba(99,179,237,0.2);  border:1px solid rgba(99,179,237,0.5); }}
+
+/* ── METRIC ROWS ──────────────────────────────────────────── */
+.ow-metric-row {{ display:flex; justify-content:space-between; align-items:center;
     padding:0.5rem 0.75rem; border:1px solid rgba(99,179,237,0.08); border-radius:6px;
-    margin-bottom:0.4rem; background:rgba(255,255,255,0.015); transition:background 0.15s; }
-.ow-metric-row:hover { background:rgba(99,179,237,0.04); }
-.ow-metric-key  { color:#a0b8cc; font-weight:500; font-size:0.8rem; display:flex; align-items:center; gap:8px; }
-.ow-metric-icon { font-size:0.85rem; opacity:0.75; width:18px; text-align:center; }
-.ow-metric-val  { color:#63b3ed; font-weight:600; font-size:0.82rem; }
-/* DRIFT METRIC CARDS */
-.drift-metrics-row { display:flex; gap:8px; margin-bottom:0.8rem; flex-wrap:wrap; }
-.drift-metric-card { flex:1; min-width:110px; background:rgba(10,25,50,0.5); border:1px solid rgba(99,179,237,0.12); border-radius:6px; padding:8px; text-align:center; backdrop-filter:blur(4px); }
-.drift-metric-card .card-icon { font-size:1.1rem; margin-bottom:4px; }
-.drift-metric-card .card-title { font-size:0.62rem; color:#90a4b7; font-weight:600; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.02em; }
-.drift-metric-card .card-val { font-size:0.75rem; font-weight:600; color:#e2e8f0; line-height:1.2; }
-.icon-red { color:#f87171; }
-.icon-green { color:#48bb78; }
-.icon-blue { color:#63b3ed; }
-/* MAP */
-.map-container { border:1px solid rgba(99,179,237,0.13); border-radius:8px; overflow:hidden; }
-/* THUMBS */
-.thumb-label { text-align:center; font-size:0.62rem; color:#90a4b7; margin-top:0.2rem; text-transform:uppercase; letter-spacing:0.01em; }
-.stPyplot { border-radius:6px; overflow:hidden; border:1px solid rgba(99,179,237,0.1); }
-/* FOOTER */
-.ow-footer { margin-top:2.5rem; border-top:1px solid rgba(99,179,237,0.09); padding-top:1.4rem; }
-.ow-footer-grid { display:flex; gap:0; margin-bottom:1.3rem; }
-.ow-footer-item { flex:1; display:flex; align-items:flex-start; gap:0.85rem; padding:0.9rem 1.1rem; border-right:1px solid rgba(99,179,237,0.07); }
-.ow-footer-item:first-child { padding-left:0; }
-.ow-footer-item:last-child  { border-right:none; }
-.ow-footer-icon { font-size:1.9rem; opacity:0.65; flex-shrink:0; margin-top:0.1rem; }
-.ow-footer-content h4 { font-size:0.87rem; font-weight:600; color:#63b3ed; margin:0 0 0.22rem; }
-.ow-footer-content p  { font-size:0.75rem; color:#718096; margin:0; line-height:1.4; }
-.ow-footer-copy { text-align:center; color:#4a5568; font-size:0.78rem; padding-bottom:1.4rem; }
-.ow-footer-copy a { color:#63b3ed; text-decoration:none; }
+    margin-bottom:0.4rem; background:rgba(255,255,255,0.025); transition:background 0.15s; }}
+.ow-metric-row:hover {{ background:rgba(99,179,237,0.06); }}
+.ow-metric-key  {{ color:#a8c0d6 !important; font-weight:500; font-size:0.8rem;
+    display:flex; align-items:center; gap:8px; }}
+.ow-metric-icon {{ font-size:0.85rem; opacity:0.75; width:18px; text-align:center; }}
+.ow-metric-val  {{ color:#7dd3fc !important; font-weight:600; font-size:0.82rem; }}
+
+/* ── DRIFT CARDS ──────────────────────────────────────────── */
+.drift-metrics-row {{ display:flex; gap:8px; margin-bottom:0.8rem; flex-wrap:wrap; }}
+.drift-metric-card {{ flex:1; min-width:110px; background:rgba(4,14,38,0.92) !important;
+    border:1px solid rgba(99,179,237,0.18); border-radius:8px; padding:8px;
+    text-align:center; backdrop-filter:blur(8px); }}
+.drift-metric-card .card-icon  {{ font-size:1.1rem; margin-bottom:4px; }}
+.drift-metric-card .card-title {{ font-size:0.62rem; color:#7ea8c9 !important;
+    font-weight:600; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.02em; }}
+.drift-metric-card .card-val   {{ font-size:0.75rem; font-weight:600;
+    color:#dde8f5 !important; line-height:1.2; }}
+.icon-red   {{ color:#f87171 !important; }}
+.icon-green {{ color:#4ade80 !important; }}
+.icon-blue  {{ color:#60a5fa !important; }}
+
+/* ── MAP ──────────────────────────────────────────────────── */
+.map-container {{ border:1px solid rgba(99,179,237,0.13); border-radius:8px; overflow:hidden; }}
+
+/* ── THUMBS ───────────────────────────────────────────────── */
+.thumb-label {{ text-align:center; font-size:0.62rem; color:#90a4b7 !important;
+    margin-top:0.2rem; text-transform:uppercase; letter-spacing:0.01em; }}
+.stPyplot {{ border-radius:6px; overflow:hidden; border:1px solid rgba(99,179,237,0.1); }}
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+.ow-footer {{ margin-top:2.5rem; border-top:1px solid rgba(99,179,237,0.09); padding-top:1.4rem; }}
+.ow-footer-grid {{ display:flex; gap:0; margin-bottom:1.3rem; }}
+.ow-footer-item {{ flex:1; display:flex; align-items:flex-start; gap:0.85rem;
+    padding:0.9rem 1.1rem; border-right:1px solid rgba(99,179,237,0.07); }}
+.ow-footer-item:first-child {{ padding-left:0; }}
+.ow-footer-item:last-child  {{ border-right:none; }}
+.ow-footer-icon {{ font-size:1.9rem; opacity:0.65; flex-shrink:0; margin-top:0.1rem; }}
+.ow-footer-content h4 {{ font-size:0.87rem; font-weight:600; color:#63b3ed !important; margin:0 0 0.22rem; }}
+.ow-footer-content p  {{ font-size:0.75rem; color:#8fa8bc !important; margin:0; line-height:1.4; }}
+.ow-footer-copy   {{ text-align:center; color:#5a7a90 !important; font-size:0.78rem; padding-bottom:1.4rem; }}
+.ow-footer-copy a {{ color:#63b3ed !important; text-decoration:none; }}
+
+/* ── BUTTONS ──────────────────────────────────────────────── */
+.stButton > button {{
+    color: #e2e8f0 !important;
+    background: rgba(20,50,120,0.82) !important;
+    border: 1px solid rgba(99,179,237,0.4) !important;
+    font-weight: 600 !important;
+}}
+.stButton > button:hover {{
+    background: rgba(37,99,235,0.9) !important;
+    border-color: #60a5fa !important; color:#fff !important;
+}}
+
+/* ── ALERTS ───────────────────────────────────────────────── */
+.stInfo, [data-testid="stInfo"] {{
+    background:rgba(15,40,100,0.80) !important; color:#bfdbfe !important;
+    border-color:rgba(99,179,237,0.35) !important;
+}}
+.stError, [data-testid="stNotification"] {{
+    background:rgba(100,20,20,0.80) !important; color:#fca5a5 !important;
+    border-color:rgba(239,68,68,0.45) !important;
+}}
+.stWarning {{ background:rgba(100,45,10,0.80) !important; color:#fde68a !important; }}
+.stSpinner > div {{ color:#93c5fd !important; }}
+
+/* ── LIVE BADGE ───────────────────────────────────────────── */
+@keyframes livePulse {{
+    0%, 100% {{ opacity:1; transform:scale(1); }}
+    50%       {{ opacity:0.4; transform:scale(1.35); }}
+}}
+.live-badge {{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.55);
+    color:#34d399 !important; font-size:0.68rem; font-weight:700;
+    letter-spacing:0.06em; padding:3px 11px; border-radius:20px;
+}}
+.live-dot {{
+    width:7px; height:7px; border-radius:50%; background:#34d399;
+    animation:livePulse 1.2s ease-in-out infinite;
+}}
+
+/* ── COORD FLASH ──────────────────────────────────────────── */
+@keyframes fadeFlash {{
+    0%   {{ background:rgba(99,179,237,0.25); }}
+    100% {{ background:transparent; }}
+}}
+.coord-cell {{ animation:fadeFlash 0.8s ease-out; color:#93c5fd !important; font-weight:600 !important; }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ==============================================================================
@@ -591,9 +756,7 @@ def _build_trajectory_chart(traj_pts: list, spill_lat: float, spill_lon: float, 
 if "uploader_key" not in st.session_state:
     st.session_state.uploader_key = 0
 
-if "sim_active" not in st.session_state:
-    st.session_state.sim_active = True  # Enable simulation automatically by default!
-
+# Live tracking is always on — no manual toggle
 if "sim_step" not in st.session_state:
     st.session_state.sim_step = 0
 
@@ -602,33 +765,31 @@ if "sim_step" not in st.session_state:
 # ==============================================================================
 
 st.markdown("""
-<div class="ow-navbar">
-  <div class="ow-brand">
-    <div class="ow-brand-icon">\U0001f30a</div>
-    <div class="ow-brand-text">
-      <h1>OCEANWATCH</h1>
-      <p>Oil Spill Detection & Backtracking System</p>
+<div class="ow-navbar" style="display:flex;justify-content:space-between;align-items:center;padding:1rem 0 0.85rem;border-bottom:1px solid rgba(99,179,237,0.18);margin-bottom:1rem;">
+  <div class="ow-brand" style="display:flex;align-items:center;gap:12px;">
+    <div style="font-size:2rem;line-height:1;">\U0001f30a</div>
+    <div>
+      <h1 style="font-size:1.4rem;font-weight:700;margin:0;color:#ffffff !important;letter-spacing:0.02em;">OCEANWATCH</h1>
+      <p style="font-size:0.75rem;color:#63b3ed !important;margin:0;font-weight:400;">Oil Spill Detection &amp; Backtracking System</p>
     </div>
   </div>
-  
-  <div class="ow-status-badges">
-    <div class="ow-status-badge status-complete">
-       <span class="status-dot">\u25cf</span> ANALYSIS COMPLETE
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:4px;background:rgba(6,20,48,0.88);border:1px solid rgba(72,187,120,0.5);color:#48bb78 !important;backdrop-filter:blur(6px);letter-spacing:0.03em;">
+       <span>&#9679;</span> ANALYSIS COMPLETE
     </div>
-    <div class="ow-status-badge status-model">
-       <span>🧠</span> MODEL: U-NET
+    <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:4px;background:rgba(6,20,48,0.88);border:1px solid rgba(99,179,237,0.4);color:#63b3ed !important;backdrop-filter:blur(6px);letter-spacing:0.03em;">
+       <span>&#129504;</span> MODEL: U-NET
     </div>
-    <div class="ow-status-badge status-data">
-       <span>🛰️</span> DATA: SENTINEL-1 SAR
+    <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:4px;background:rgba(6,20,48,0.88);border:1px solid rgba(159,122,234,0.5);color:#b794f4 !important;backdrop-filter:blur(6px);letter-spacing:0.03em;">
+       <span>&#128752;</span> DATA: SENTINEL-1 SAR
     </div>
-    <div class="ow-status-badge status-env">
-       <span>⚙️</span> ENVIRONMENT: SYNTHETIC
+    <div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:4px;background:rgba(6,20,48,0.88);border:1px solid rgba(79,209,197,0.5);color:#4fd1c5 !important;backdrop-filter:blur(6px);letter-spacing:0.03em;">
+       <span>&#9881;</span> ENVIRONMENT: SYNTHETIC
     </div>
   </div>
-  
-  <div class="ow-nav-links">
-    <a href="#" class="active">Home</a>
-    <a href="#">About</a>
+  <div style="display:flex;align-items:center;gap:1.5rem;">
+    <a href="#" style="color:#63b3ed !important;text-decoration:none;font-weight:600;font-size:0.85rem;">Home</a>
+    <a href="#" style="color:#94a3b8 !important;text-decoration:none;font-weight:500;font-size:0.85rem;">About</a>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -651,9 +812,9 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is None:
     st.markdown("""
-    <div class="ow-hero">
-      <h2>Oil Spill Detection &amp; Drift Analysis</h2>
-      <p>Advanced AI-powered system for detecting oil spills in Sentinel-1 SAR imagery
+    <div style="padding:2.5rem 0 1.5rem;">
+      <h2 style="font-size:2.2rem;font-weight:700;color:#ffffff !important;margin:0 0 0.6rem;line-height:1.15;text-shadow:0 2px 20px rgba(0,0,0,0.9);">Oil Spill Detection &amp; Drift Analysis</h2>
+      <p style="font-size:0.95rem;color:#b8d4e8 !important;max-width:520px;line-height:1.6;margin:0 0 2rem;">Advanced AI-powered system for detecting oil spills in Sentinel-1 SAR imagery
          and backtracking their probable origin using drift simulation.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -726,16 +887,15 @@ if uploaded_file is not None:
             except Exception as _ae:
                 ais_err = str(_ae)
 
-        # ---- DYNAMIC DRAFT VESSEL MOVEMENT ANIMATION LAYER ----
+        # ---- LIVE VESSEL MOVEMENT ANIMATION (always-on) ----
         if ais_ok and ais_result and ais_result.get("candidate_vessels"):
-            sim_active = st.session_state.get("sim_active", True)
             sim_step = st.session_state.get("sim_step", 0)
 
             for cand in ais_result["candidate_vessels"]:
                 pts = cand.get("ais_records", [])
                 if len(pts) >= 1:
                     start_pt = pts[0]
-                    # If single point exists, extrapolate destination based on speed/heading
+                    # Extrapolate destination if only one point available
                     if len(pts) == 1:
                         end_lat = start_pt["latitude"] + 0.012
                         end_lon = start_pt["longitude"] - 0.004
@@ -743,23 +903,27 @@ if uploaded_file is not None:
                         end_pt = pts[-1]
                         end_lat = end_pt["latitude"]
                         end_lon = end_pt["longitude"]
-                    
+
                     start_lat = start_pt["latitude"]
                     start_lon = start_pt["longitude"]
 
-                    # Interpolation fraction over 100 steps (much smoother and slower)
+                    # Smooth interpolation over 100 steps
                     t_frac = (sim_step % 100) / 100.0
-                    cand["latitude"] = start_lat + t_frac * (end_lat - start_lat)
+                    cand["latitude"]  = start_lat + t_frac * (end_lat - start_lat)
                     cand["longitude"] = start_lon + t_frac * (end_lon - start_lon)
 
-        # Clear space for New Analysis button
+        # Header row: Live badge + New Analysis button
         col_hdr_left, col_hdr_right = st.columns([5, 1])
+        with col_hdr_left:
+            st.markdown("""
+            <div style='display:flex;align-items:center;gap:10px;padding:0.3rem 0'>
+              <span class='live-badge'><span class='live-dot'></span>LIVE TRACKING</span>
+            </div>
+            """, unsafe_allow_html=True)
         with col_hdr_right:
             st.markdown("<div style='height:0.5rem'></div>", unsafe_allow_html=True)
             if st.button("\u2190 New Analysis", use_container_width=True):
                 st.session_state.uploader_key += 1
-                if "sim_active" in st.session_state:
-                    st.session_state.sim_active = True
                 st.rerun()
 
         # ================================================================
@@ -976,21 +1140,14 @@ if uploaded_file is not None:
                     # ---- Member 3: AIS Vessel Analysis UI section ----
                     if ais_ok and ais_result:
                         st.markdown('<div class="drift-divider"></div>', unsafe_allow_html=True)
-                        
-                        # Live Movement simulation controls
-                        col_ow_title, col_ow_sim = st.columns([3, 1.5])
-                        with col_ow_title:
-                            st.markdown('<div class="ow-panel-title" style="color:#63b3ed; font-size:0.92rem; font-weight:700; margin-bottom:0.6rem; margin-top:0.4rem; border:none; padding:0;">🚢&nbsp; AIS VESSEL ANALYSIS</div>', unsafe_allow_html=True)
-                        with col_ow_sim:
-                            if st.session_state.get("sim_active", True):
-                                if st.button("■ Stop Simulation", key="btn_stop_sim", use_container_width=True):
-                                    st.session_state.sim_active = False
-                                    st.rerun()
-                            else:
-                                if st.button("▶ Start Live tracking", key="btn_start_sim", use_container_width=True):
-                                    st.session_state.sim_active = True
-                                    st.session_state.sim_step = 0
-                                    st.rerun()
+
+                        # AIS section header with always-on live badge
+                        st.markdown("""
+                        <div style='display:flex;align-items:center;gap:10px;margin-bottom:0.6rem;margin-top:0.4rem;'>
+                          <div class='ow-panel-title' style='color:#63b3ed;font-size:0.92rem;font-weight:700;border:none;padding:0;margin:0;'>🚢&nbsp; AIS VESSEL ANALYSIS</div>
+                          <span class='live-badge'><span class='live-dot'></span>LIVE</span>
+                        </div>
+                        """, unsafe_allow_html=True)
 
                         meta = ais_result.get("metadata", {})
                         st.markdown(f"""
@@ -1023,8 +1180,8 @@ if uploaded_file is not None:
                                    <td style="padding: 8px; font-weight:700; color:#63b3ed;">#{idx}</td>
                                    <td style="padding: 8px;"><strong>{mmsi}</strong><br><span style="font-size:0.7rem; color:#90a4b7;">{name_str}</span></td>
                                    <td style="padding: 8px;">{v_type}</td>
-                                   <td style="padding: 8px; font-family:monospace; color:#a0b8cc;">{c_lat:.6f}&deg; N</td>
-                                   <td style="padding: 8px; font-family:monospace; color:#a0b8cc;">{c_lon:.6f}&deg; E</td>
+                                   <td class="coord-cell" style="padding: 8px; font-family:monospace; color:#93c5fd; font-weight:600;">{c_lat:.6f}&deg; N</td>
+                                   <td class="coord-cell" style="padding: 8px; font-family:monospace; color:#93c5fd; font-weight:600;">{c_lon:.6f}&deg; E</td>
                                    <td style="padding: 8px;">{dist:.2f} km</td>
                                    <td style="padding: 8px;">{time_diff:.1f} min</td>
                                    <td style="padding: 8px; text-align: right; color:#48bb78; font-weight:bold;">{score:.1f}/100</td>
@@ -1119,42 +1276,47 @@ if uploaded_file is not None:
 # ==============================================================================
 
 st.markdown("""
-<div class="ow-footer">
-  <div class="ow-footer-grid">
-    <div class="ow-footer-item">
-      <div class="ow-footer-icon">\U0001f6f0\ufe0f</div>
-      <div class="ow-footer-content">
-        <h4>SAR Technology</h4><p>Sentinel-1 SAR<br>VV Polarization</p>
+<div style="margin-top:2.5rem;border-top:1px solid rgba(99,179,237,0.12);padding-top:1.4rem;">
+  <div style="display:flex;gap:0;margin-bottom:1.3rem;">
+    <div style="flex:1;display:flex;align-items:flex-start;gap:0.85rem;padding:0.9rem 1.1rem;border-right:1px solid rgba(99,179,237,0.07);padding-left:0;">
+      <div style="font-size:1.9rem;opacity:0.7;">&#128752;&#65039;</div>
+      <div>
+        <h4 style="font-size:0.87rem;font-weight:600;color:#63b3ed !important;margin:0 0 0.22rem;">SAR Technology</h4>
+        <p style="font-size:0.75rem;color:#90a4b7 !important;margin:0;line-height:1.4;">Sentinel-1 SAR<br>VV Polarization</p>
       </div>
     </div>
-    <div class="ow-footer-item">
-      <div class="ow-footer-icon">\U0001f9e0</div>
-      <div class="ow-footer-content">
-        <h4>AI Powered</h4><p>U-Net Deep Learning<br>Model</p>
+    <div style="flex:1;display:flex;align-items:flex-start;gap:0.85rem;padding:0.9rem 1.1rem;border-right:1px solid rgba(99,179,237,0.07);">
+      <div style="font-size:1.9rem;opacity:0.7;">&#129504;</div>
+      <div>
+        <h4 style="font-size:0.87rem;font-weight:600;color:#63b3ed !important;margin:0 0 0.22rem;">AI Powered</h4>
+        <p style="font-size:0.75rem;color:#90a4b7 !important;margin:0;line-height:1.4;">U-Net Deep Learning<br>Model</p>
       </div>
     </div>
-    <div class="ow-footer-item">
-      <div class="ow-footer-icon">\U0001f9ed</div>
-      <div class="ow-footer-content">
-        <h4>Drift Analysis</h4><p>Backward Trajectory<br>Origin Estimation</p>
+    <div style="flex:1;display:flex;align-items:flex-start;gap:0.85rem;padding:0.9rem 1.1rem;border-right:1px solid rgba(99,179,237,0.07);">
+      <div style="font-size:1.9rem;opacity:0.7;">&#129517;</div>
+      <div>
+        <h4 style="font-size:0.87rem;font-weight:600;color:#63b3ed !important;margin:0 0 0.22rem;">Drift Analysis</h4>
+        <p style="font-size:0.75rem;color:#90a4b7 !important;margin:0;line-height:1.4;">Backward Trajectory<br>Origin Estimation</p>
       </div>
     </div>
-    <div class="ow-footer-item">
-      <div class="ow-footer-icon">\U0001f30a</div>
-      <div class="ow-footer-content">
-        <h4>Marine Monitoring</h4><p>Real-time Ocean<br>Surveillance</p>
+    <div style="flex:1;display:flex;align-items:flex-start;gap:0.85rem;padding:0.9rem 1.1rem;">
+      <div style="font-size:1.9rem;opacity:0.7;">&#127754;</div>
+      <div>
+        <h4 style="font-size:0.87rem;font-weight:600;color:#63b3ed !important;margin:0 0 0.22rem;">Marine Monitoring</h4>
+        <p style="font-size:0.75rem;color:#90a4b7 !important;margin:0;line-height:1.4;">Real-time Ocean<br>Surveillance</p>
       </div>
     </div>
   </div>
-  <div class="ow-footer-copy">
-    &copy; 2026 <a href="#">OceanWatch</a> | Protecting Our Oceans with AI Technology
+  <div style="text-align:center;color:#5a7a90 !important;font-size:0.78rem;padding-bottom:1.4rem;">
+    &copy; 2026 <a href="#" style="color:#63b3ed !important;text-decoration:none;">OceanWatch</a> | Protecting Our Oceans with AI Technology
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# ---- Sim autorefresh loop ----
-if st.session_state.get("sim_active", True):
-    import time
-    st.session_state.sim_step = (st.session_state.get("sim_step", 0) + 1) % 100
-    time.sleep(0.3)
-    st.rerun()
+
+# ---- Live vessel tracking autorefresh (5s interval to prevent flash) ----
+import time as _time
+st.session_state.sim_step = (st.session_state.get("sim_step", 0) + 1) % 100
+_time.sleep(5)
+st.rerun()
+
